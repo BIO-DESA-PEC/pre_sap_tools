@@ -1,0 +1,32 @@
+{
+  "name": "login-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "autotable": "^1.0.0",
+    "axios": "^1.8.1",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "jspdf-autotable": "^5.0.2",
+    "next": "15.2.1",
+    "next-auth": "^5.0.0-beta.28",
+    "number-to-words": "^1.2.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-icons": "^5.5.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4",
+    "eslint": "^9",
+    "eslint-config-next": "15.2.1",
+    "tailwindcss": "^4"
+  }
+}
