@@ -1,0 +1,437 @@
+/* Contenedor principal */
+.container {
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  font-family: 'Arial', sans-serif;
+  color: #333;
+}
+
+/* Título del formulario */
+.title {
+  text-align: center;
+  font-size: 1.6rem; /* Título más grande */
+  font-weight: 700;
+  color: #ffffff;
+  background-color: #007bff;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Subtítulo */
+.subtitle {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+/* Estilo del encabezado del formulario */
+.header {
+  background-color: #f8f9fa;
+  padding: 25px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 20px; /* Aumenta el espaciado */
+}
+
+/* Campos del encabezado */
+.header .inputField {
+  width: 48%;
+}
+
+.header .inputField input,
+.header .inputField select {
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  background-color: #ffffff;
+  color: #495057;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.header .inputField input:focus,
+.header .inputField select:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.header .inputField label {
+  font-weight: bold;
+  margin-bottom: 8px;
+  display: block;
+}
+
+/* Estilo de los botones */
+.button,
+.submitButton button {
+  background-color: #007bff;
+  color: white;
+  padding: 14px;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%;
+  margin-top: 15px;
+}
+
+.button:hover,
+.submitButton button:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.button:active,
+.submitButton button:active {
+  transform: translateY(0);
+}
+
+/* Estilo del mensaje */
+.message {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 1rem;
+  color: #d9534f;
+}
+
+.message.success {
+  color: #28a745;
+}
+
+/* Estilo de la tabla de detalle de transferencia */
+.stockLines {
+  margin-top: 20px;
+  padding: 20px;
+  background-color: #f9fafb;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.stockLines h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 15px;
+}
+
+/* Tabla de detalle de transferencia */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: #fff;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  text-align: center;
+  font-size: 1rem;
+  color: #495057;
+  border-bottom: 1px solid #e1e1e1;
+}
+
+.table th {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.table tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.table tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+.table tr:hover {
+  background-color: #f1f3f5;
+}
+
+.table td input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background-color: #fff;
+  color: #495057;
+}
+
+.table td input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+.table button {
+  background-color: #28a745;
+  color: white;
+  padding: 8px 15px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-top: 5px;
+}
+
+.table button:hover {
+  background-color: #218838;
+  transform: translateY(-2px);
+}
+
+.table button:active {
+  transform: translateY(0);
+}
+
+/* Estilo del botón de agregar item */
+.addItemButton {
+  background-color: #007bff;
+  color: white;
+  padding: 12px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  margin-top: 20px;
+  display: inline-block;
+}
+
+.addItemButton:hover {
+  background-color: #0056b3;
+  transform: translateY(-2px);
+}
+
+.addItemButton:active {
+  transform: translateY(0);
+}
+
+
+/* Estilo del modal de lotes */
+.batchModal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  background-color: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.batchModal h3 {
+  font-size: 1.5rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.batchModal label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.batchModal input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 15px;
+  border-radius: 6px;
+  border: 1px solid #ced4da;
+  font-size: 1rem;
+}
+
+.batchModal input:focus {
+  border-color: #007bff;
+}
+
+.batchModal button {
+  background-color: #28a745;
+  color: white;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s ease;
+}
+
+.batchModal button:hover {
+  background-color: #218838;
+}
+
+.batchModal button:focus {
+  outline: none;
+}
+
+/* Fondo oscuro cuando el modal está activo */
+.modalBackground {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+.btnAdd {
+  background-color: rgb(201, 185, 12);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+}
+
+.btnAdd:hover {
+  background-color: rgb(255, 187, 1);
+}
+
+.btnRemove {
+  background-color: rgb(97, 95, 95);
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 16px;
+  float: right; /* Mueve el botón a la izquierda */
+  margin-right: 10px; /* Ajusta el espacio con otros elementos */
+}
+
+.btnRemove:hover {
+  background-color: rgb(48, 45, 45);
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.transferButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.headerBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  background-color: #ffffff;
+  padding: 16px 24px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.titleCentered {
+  flex-grow: 1;
+  text-align: center;
+  font-size: 26px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin: 0;
+}
+
+.iconButton:hover {
+  color: #ffd700;
+}
+.iconButton {
+  background: none;
+  border: none;
+  color: #3498db;
+  font-size: 20px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.iconButton:hover {
+  transform: scale(1.15);
+}
+
+.summaryBox {
+  margin-top: 30px;
+  padding: 20px;
+  border: 2px solid #dcdcdc;
+  border-radius: 8px;
+  background-color: #fefefe;
+}
+
+.summaryItem {
+  margin-bottom: 25px;
+}
+
+.summaryItem h4 {
+  margin-bottom: 10px;
+  color: #004080;
+}
+
+.summaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.summaryTable th,
+.summaryTable td {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+
+.summaryTable th {
+  background-color: #004080;
+  color: white;
+}
+
+.removeBtn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.removeBtn:hover {
+  background-color: #b52a37;
+}
+
+.loteTableScroll {
+  max-height: 300px; /* Ajusta según tu preferencia */
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}

@@ -1,0 +1,97 @@
+.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(to right, #e9ecef, #f8f9fa);
+}
+
+.card {
+  background: white;
+  padding: 2.5rem 2rem;
+  border-radius: 15px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-3px);
+}
+
+.logo {
+  width: 110px;
+  height: auto;
+  margin: 0 auto 1.5rem;
+}
+
+.title {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #111;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #555;
+  margin-bottom: 2rem;
+}
+
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2563eb;
+  color: white;
+  padding: 12px;
+  width: 100%;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.button:hover {
+  background-color: #1e40af;
+}
+
+.button:disabled {
+  background-color: #4c6bfa;
+  cursor: not-allowed;
+}
+
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2563eb;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.contacto {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.contacto a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.contacto a:hover {
+  text-decoration: underline;
+}

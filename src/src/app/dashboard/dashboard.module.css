@@ -1,0 +1,140 @@
+.dashboard {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f5f7fa;
+  font-family: "Segoe UI", sans-serif;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 20px 0;
+  position: fixed;
+  height: 100%;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navList li {
+  padding: 15px 30px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  transition: background 0.2s ease-in-out;
+}
+
+.navList li svg {
+  margin-right: 10px;
+}
+
+.navList li:hover {
+  background-color: #34495e;
+}
+
+.hasSubmenu {
+  position: relative;
+}
+
+.submenu {
+  list-style: none;
+  padding-left: 30px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.submenu li {
+  padding: 10px 0;
+  color: #bdc3c7;
+  cursor: pointer;
+}
+
+.submenu li:hover {
+  color: #ffffff;
+}
+
+.footer {
+  padding: 20px 30px;
+  border-top: 1px solid #7f8c8d;
+}
+
+.logout {
+  background: #e74c3c;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  margin-top: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: background 0.3s;
+}
+
+.logout:hover {
+  background: #c0392b;
+}
+
+.content {
+  margin-left: 260px;
+  padding: 40px;
+  width: 100%;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.welcomeCard {
+  background-color: #ffffff;
+  padding: 40px;
+  margin-top: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeSlide 0.6s ease-in-out;
+}
+
+.welcomeCard h1 {
+  font-size: 32px;
+  color: #2c3e50;
+  margin-bottom: 15px;
+}
+
+.welcomeCard p {
+  font-size: 18px;
+  color: #7f8c8d;
+  margin-bottom: 10px;
+}
+
+@keyframes fadeSlide {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
