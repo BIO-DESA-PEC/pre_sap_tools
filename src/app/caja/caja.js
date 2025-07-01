@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
+import ModalCajas from './ModalCajas';
 import styles from './Caja.module.css';
 
 export default function Caja() {
@@ -27,6 +28,7 @@ export default function Caja() {
   const [mensaje, setMensaje] = useState('');
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina] = useState(5);
+  const [mostrarModal, setMostrarModal] = useState(false);
 
   const obtenerCajas = async () => {
     const res = await fetch('https://pruebas-sap-back.onrender.com/cajas-instrumental');
@@ -129,6 +131,33 @@ export default function Caja() {
     setModoEditar(true);
   };
 
+  const seleccionarCajaDesdeModal = (caja) => {
+    const detalles = cajas
+      .filter((c) => c.CodigoCaja === caja.CodigoCaja)
+      .map((c) => ({
+        CodigoItem: c.CodigoItem || '',
+        Descripcion: c.Descripcion || '',
+        CantidadItem: c.CantidadItem || 1,
+        TipoItem: c.TipoItem || '',
+        LoteItem: c.LoteItem || ''
+      }));
+
+    const fechaFormateada = caja.FechaCaja
+      ? new Date(caja.FechaCaja).toISOString().split('T')[0]
+      : '';
+
+    setFormulario({
+      CodigoCaja: caja.CodigoCaja,
+      FechaCaja: fechaFormateada,
+      ClaseCaja: caja.ClaseCaja,
+      Almacen: caja.Almacen,
+      Lineas: detalles
+    });
+
+    setModoEditar(true);
+    setMostrarModal(false);
+  };
+
   const limpiarFormulario = () => {
     setFormulario({
       CodigoCaja: '',
@@ -207,14 +236,24 @@ export default function Caja() {
       </div>
 
       <div className={styles.formulario}>
-        <input
-          className={styles.inputControl}
-          placeholder="Código Caja"
-          value={formulario.CodigoCaja}
-          onChange={(e) =>
-            setFormulario({ ...formulario, CodigoCaja: e.target.value })
-          }
-        />
+        <div className={styles.inputConIcono}>
+          <input
+            className={styles.inputControl}
+            placeholder="Código Caja"
+            value={formulario.CodigoCaja}
+            onChange={(e) =>
+              setFormulario({ ...formulario, CodigoCaja: e.target.value })
+            }
+          />
+          <button
+            type="button"
+            className={styles.iconoLupa}
+            onClick={() => setMostrarModal(true)}
+            title="Buscar caja"
+          >
+            🔍
+          </button>
+        </div>
 
         <input
           className={styles.inputControl}
@@ -353,6 +392,14 @@ export default function Caja() {
       <button className={styles.boton} onClick={agregarLinea}>Agregar Ítem</button>
 
       {mensaje && <p className={styles.mensaje}>{mensaje}</p>}
+
+      {mostrarModal && (
+        <ModalCajas
+          cajas={cajas}
+          onClose={() => setMostrarModal(false)}
+          onSelect={seleccionarCajaDesdeModal}
+        />
+      )}
     </div>
   );
 }

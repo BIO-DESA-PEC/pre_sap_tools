@@ -46,9 +46,12 @@ export default function UploadFile() {
       });
 
       const data = await response.json();
-      setMessage(data.error ? `❌ Error: ${data.details}` : "✅ ¡Transferencia exitosa!");
 
-      if (!data.error) {
+      if (!response.ok) {
+        const errorMsg = data?.error || data?.details || "Error desconocido";
+        setMessage(`❌ Error: ${errorMsg}`);
+      } else {
+        setMessage("✅ ¡Transferencia exitosa!");
         setFile(null);
         setTimeout(() => setMessage(""), 3000);
       }
@@ -57,6 +60,7 @@ export default function UploadFile() {
     } finally {
       setIsUploading(false);
     }
+
   };
 
   const goToDashboard = () => {

@@ -12,6 +12,7 @@ import {
   FaSignOutAlt,
   FaFileAlt,
   FaFolderOpen,
+  FaBoxOpen
 } from "react-icons/fa";
 
 export default function Dashboard() {
@@ -67,7 +68,7 @@ export default function Dashboard() {
             </>
           )}
 
-          {/* Subir archivo y cajas solo para Administrador y Logística */}
+          {/* Subir archivo, cajas y activos fijos solo para Administrador y Logística */}
           {(rol === "Administrador" || rol === "Logística") && (
             <>
               <li>
@@ -87,6 +88,11 @@ export default function Dashboard() {
                   <li><Link href="/archivo_caja">Carga Cajas Masiva</Link></li>
                 </ul>
               )}
+              <li>
+                <Link href="/activo_fijo">
+                  <FaBoxOpen /> Activo Fijo
+                </Link>
+              </li>
             </>
           )}
         </ul>

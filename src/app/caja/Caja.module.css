@@ -164,3 +164,89 @@
   background-color: #d3d3d3;
   cursor: not-allowed;
 }
+
+
+.inputConIcono {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.iconoLupa {
+  padding: 6px 10px;
+  background-color: #ddd;
+  border: 1px solid #999;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modalContenido {
+  background-color: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.tablaModal {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+}
+
+.tablaModal th,
+.tablaModal td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  text-align: left;
+}
+
+.botonSeleccionar {
+  background-color: #1a73e8;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.botonCerrar {
+  margin-top: 16px;
+  padding: 8px 16px;
+  border: none;
+  background-color: #999;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modalCloseButton {
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #333;
+}
