@@ -57,9 +57,9 @@ export const generarReporteTransferencia = (data, warehouses = [], nombreUsuario
     doc.setFont("helvetica", "bold");
     doc.text(data.CardName || "BIOCELLS DISCOVERIES INTERNACIONAL S.A.", 17, y + 12);
     doc.setFont("helvetica", "normal");
-    doc.text("Dirección: AV. QUITO", 17, y + 17);
-    doc.text("Sucursal: COSTA CENTRO", 17, y + 22);
-    doc.text("Tel: 095475195", 17, y + 27);
+    doc.text("Dirección: AV. SIENA 214", 17, y + 17);
+    doc.text("Sucursal: Y MIGUEL ÁNGEL", 17, y + 22);
+    doc.text("Tel: (02)3550017", 17, y + 27);
     doc.text(`RUC: ${data.RUC || "1791994191001"}`, 17, y + 32);
 
     // Cuadro Origen/Destino con nombre

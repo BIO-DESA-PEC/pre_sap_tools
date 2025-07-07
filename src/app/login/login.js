@@ -22,7 +22,9 @@ export default function Login() {
         <p className={styles.subtitle}>
           Plataforma de gestión integrada con <strong>SAP Business One</strong>
         </p>
-
+        <p className={styles.subtitle}>
+          Ambiente de pruebas 
+        </p>
         <button
           onClick={handleMicrosoftLogin}
           className={styles.button}

@@ -100,6 +100,7 @@ const StockTransfer = () => {
     CreationDate: formatDate(fecha),
     UpdateDate: formatDate(fecha),
     FinancialPeriod: 48,
+    SalesPersonCode:56,
     TaxDate: formatDate(fecha),
     StockTransferLines: stockTransferLines, // Verifica que aquí se estén enviando correctamente los datos
     StockTransferTaxExtension: {

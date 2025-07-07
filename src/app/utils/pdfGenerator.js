@@ -50,9 +50,9 @@ export const generarPDF = async (data, nombreUsuario = "N/A") => {
     doc.setFont("helvetica", "bold");
     doc.text("BIOCELLS DISCOVERIES INTERNACIONAL S.A.", 17, y + 12);
     doc.setFont("helvetica", "normal");
-    doc.text("AV: QUITO", 17, y + 17);
-    doc.text("COSTA CENTRO", 17, y + 22);
-    doc.text("Tel: 095475195", 17, y + 27);
+    doc.text("AV: SIENA 214", 17, y + 17);
+    doc.text("Y MIGUEL ÁNGEL", 17, y + 22);
+    doc.text("Tel: (02)3550017", 17, y + 27);
     doc.text("RUC: 1791994191001", 17, y + 32);
 
     // Cuadro Origen/Destino

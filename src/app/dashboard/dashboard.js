@@ -19,6 +19,7 @@ export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [showSubmenu, setShowSubmenu] = useState(false);
+  const [showTransferSubmenu, setShowTransferSubmenu] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -43,16 +44,25 @@ export default function Dashboard() {
         <div className={styles.logo}>SAP MENU</div>
 
         <ul className={styles.navList}>
-          {/* Transferencia solo para Administrador y Tejidos */}
+          {/* Transferencias con submenú */}
           {(rol === "Administrador" || rol === "Tejidos") && (
-            <li>
-              <Link href="/transferStocks">
-                <FaExchangeAlt /> Transferencia
-              </Link>
-            </li>
+            <>
+              <li
+                onClick={() => setShowTransferSubmenu(!showTransferSubmenu)}
+                className={styles.hasSubmenu}
+              >
+                <FaExchangeAlt /> Transferencias ▾
+              </li>
+              {showTransferSubmenu && (
+                <ul className={styles.submenu}>
+                  <li><Link href="/transferStocks">Realizar Transferencia</Link></li>
+                  <li><Link href="/transfer">Ver Transferencias</Link></li>
+                </ul>
+              )}
+            </>
           )}
 
-          {/* Reportes y Solicitudes solo para Administrador y Tejidos */}
+          {/* Reportes y Solicitudes */}
           {(rol === "Administrador" || rol === "Tejidos") && (
             <>
               <li>
@@ -68,7 +78,7 @@ export default function Dashboard() {
             </>
           )}
 
-          {/* Subir archivo, cajas y activos fijos solo para Administrador y Logística */}
+          {/* Logística */}
           {(rol === "Administrador" || rol === "Logística") && (
             <>
               <li>
@@ -99,7 +109,6 @@ export default function Dashboard() {
 
         <div className={styles.footer}>
           <span>👤 {usuario} — <em>{rol}</em></span>
-
           <button onClick={handleLogout} className={styles.logout}>
             <FaSignOutAlt /> Cerrar Sesión
           </button>
