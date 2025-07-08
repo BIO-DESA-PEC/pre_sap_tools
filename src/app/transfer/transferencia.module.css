@@ -278,3 +278,9 @@
   color: #2c3e50;
   margin: 0;
 }
+.filtrosGlobales {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}

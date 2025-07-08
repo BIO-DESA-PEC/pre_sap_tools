@@ -6,11 +6,26 @@ import { FaHome, FaSignOutAlt } from "react-icons/fa";
 import TransferModal from "./TransferModal";
 import styles from "./transferencia.module.css";
 
+// ✅ Formato correcto y sin desfase horario
+const formatearFecha = (fechaString) => {
+  if (!fechaString) return "Sin fecha";
+
+  const fecha = new Date(fechaString);
+  if (isNaN(fecha.getTime())) return "Formato inválido";
+
+  const year = fecha.getUTCFullYear();
+  const month = String(fecha.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(fecha.getUTCDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+};
+
 export default function Transfer() {
   const [transferencias, setTransferencias] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const [filtroGlobal, setFiltroGlobal] = useState("");
-  const [filtros, setFiltros] = useState({ DocNum: "", FromWarehouse: "", ToWarehouse: "" });
+  const [filtros, setFiltros] = useState({ DocNum: "", Filler: "", ToWhsCode: "" });
+  const [filtroFecha, setFiltroFecha] = useState("");
   const [transferSeleccionada, setTransferSeleccionada] = useState(null);
   const [docEntryCargando, setDocEntryCargando] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -65,17 +80,21 @@ export default function Transfer() {
   };
 
   const transferenciasFiltradas = transferencias.filter((t) => {
+    const fechaFormateada = formatearFecha(t.DocDate);
+
     const global =
       t.DocNum.toString().includes(filtroGlobal) ||
-      t.FromWarehouse.toLowerCase().includes(filtroGlobal.toLowerCase()) ||
-      t.ToWarehouse.toLowerCase().includes(filtroGlobal.toLowerCase());
+      getNombreBodega(t.Filler).toLowerCase().includes(filtroGlobal.toLowerCase()) ||
+      getNombreBodega(t.ToWhsCode).toLowerCase().includes(filtroGlobal.toLowerCase());
 
     const filtrosIndividuales =
       t.DocNum.toString().includes(filtros.DocNum) &&
-      t.FromWarehouse.toLowerCase().includes(filtros.FromWarehouse.toLowerCase()) &&
-      t.ToWarehouse.toLowerCase().includes(filtros.ToWarehouse.toLowerCase());
+      getNombreBodega(t.Filler).toLowerCase().includes(filtros.Filler.toLowerCase()) &&
+      getNombreBodega(t.ToWhsCode).toLowerCase().includes(filtros.ToWhsCode.toLowerCase());
 
-    return global && filtrosIndividuales;
+    const cumpleFecha = !filtroFecha || fechaFormateada === filtroFecha;
+
+    return global && filtrosIndividuales && cumpleFecha;
   });
 
   const totalPaginas = Math.ceil(transferenciasFiltradas.length / porPagina);
@@ -109,7 +128,8 @@ export default function Transfer() {
         </button>
       </div>
 
-      <div className={styles.filtroContainer}>
+      {/* 🔍 Filtros globales centrados */}
+      <div className={styles.filtrosGlobales}>
         <input
           type="text"
           placeholder="🔍 Buscar general..."
@@ -119,6 +139,16 @@ export default function Transfer() {
             setFiltroGlobal(e.target.value);
           }}
           className={styles.inputFiltro}
+        />
+        <input
+          type="date"
+          value={filtroFecha}
+          onChange={(e) => {
+            setPaginaActual(1);
+            setFiltroFecha(e.target.value);
+          }}
+          className={styles.inputFiltro}
+          title="Filtrar por fecha"
         />
       </div>
 
@@ -146,9 +176,9 @@ export default function Transfer() {
                     className={styles.inputHeader}
                     type="text"
                     placeholder="🔍"
-                    value={filtros.FromWarehouse}
+                    value={filtros.Filler}
                     onChange={(e) =>
-                      setFiltros({ ...filtros, FromWarehouse: e.target.value })
+                      setFiltros({ ...filtros, Filler: e.target.value })
                     }
                   />
                 </th>
@@ -158,9 +188,9 @@ export default function Transfer() {
                     className={styles.inputHeader}
                     type="text"
                     placeholder="🔍"
-                    value={filtros.ToWarehouse}
+                    value={filtros.ToWhsCode}
                     onChange={(e) =>
-                      setFiltros({ ...filtros, ToWarehouse: e.target.value })
+                      setFiltros({ ...filtros, ToWhsCode: e.target.value })
                     }
                   />
                 </th>
@@ -173,9 +203,9 @@ export default function Transfer() {
                 <tr key={t.DocEntry} className={styles.rowHover}>
                   <td>{(paginaActual - 1) * porPagina + idx + 1}</td>
                   <td>{t.DocNum}</td>
-                  <td>{getNombreBodega(t.FromWarehouse)}</td>
-                  <td>{getNombreBodega(t.ToWarehouse)}</td>
-                  <td>{t.DocDate?.split("T")[0]}</td>
+                  <td>{getNombreBodega(t.Filler)}</td>
+                  <td>{getNombreBodega(t.ToWhsCode)}</td>
+                  <td>{formatearFecha(t.DocDate)}</td>
                   <td>
                     <button
                       className={styles.viewButton}
