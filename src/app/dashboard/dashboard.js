@@ -12,7 +12,7 @@ import {
   FaSignOutAlt,
   FaFileAlt,
   FaFolderOpen,
-  FaBoxOpen
+  FaBoxOpen,
 } from "react-icons/fa";
 
 export default function Dashboard() {
@@ -20,19 +20,46 @@ export default function Dashboard() {
   const router = useRouter();
   const [showSubmenu, setShowSubmenu] = useState(false);
   const [showTransferSubmenu, setShowTransferSubmenu] = useState(false);
+  const [rol, setRol] = useState(null);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (status !== "loading" && !session) {
       router.push("/login");
     }
-  }, [status, router]);
+  }, [status, session, router]);
 
-  if (status === "loading") {
+  // Obtener el rol desde Flask al cargar el dashboard
+  useEffect(() => {
+    const fetchRol = async () => {
+      try {
+        const res = await fetch("https://pruebas-sap-back.onrender.com/verificar-usuario", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correo: session?.user?.email }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setRol(data.rol);
+        } else {
+          setRol("user");
+        }
+      } catch (error) {
+        console.error("Error al obtener rol:", error);
+        setRol("user");
+      }
+    };
+
+    if (session?.user?.email && !rol) {
+      fetchRol();
+    }
+  }, [session?.user?.email, rol]);
+
+  if (status === "loading" || !rol) {
     return <div className={styles.loading}>Cargando…</div>;
   }
 
-  const usuario = session?.user?.name || "Usuario";
-  const rol = session?.user?.role || "user";
+  const usuario = session?.user?.name ?? "Usuario";
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
@@ -44,7 +71,6 @@ export default function Dashboard() {
         <div className={styles.logo}>SAP MENU</div>
 
         <ul className={styles.navList}>
-          {/* Transferencias con submenú */}
           {(rol === "Administrador" || rol === "Tejidos") && (
             <>
               <li
@@ -59,12 +85,6 @@ export default function Dashboard() {
                   <li><Link href="/transfer">Ver Transferencias</Link></li>
                 </ul>
               )}
-            </>
-          )}
-
-          {/* Reportes y Solicitudes */}
-          {(rol === "Administrador" || rol === "Tejidos") && (
-            <>
               <li>
                 <Link href="/reportes">
                   <FaFileAlt /> Reporte de Inventario
@@ -78,7 +98,6 @@ export default function Dashboard() {
             </>
           )}
 
-          {/* Logística */}
           {(rol === "Administrador" || rol === "Logística") && (
             <>
               <li>
