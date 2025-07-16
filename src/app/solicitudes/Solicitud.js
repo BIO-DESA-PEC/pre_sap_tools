@@ -102,7 +102,7 @@ const Solicitud = () => {
 
       if (data.success) {
         setTransferencia(data.data);
-        generarReporteTransferencia(data, warehouses, nombreUsuario);
+       generarReporteTransferencia(data.data, warehouses, nombreUsuario);
         mostrarPopupError("✅ Transferencia realizada con éxito");
 
         setDetalle(null);

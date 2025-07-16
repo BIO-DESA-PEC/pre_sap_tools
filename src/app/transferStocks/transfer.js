@@ -18,6 +18,7 @@ const StockTransfer = () => {
   const [items, setItems] = useState([]); 
   const [fecha, setFecha] = useState("");
   const [cliente, setCliente]= useState("CN1791994191001");
+  const [codCirugia, setCodCirugia] = useState("Tejidos"); // valor por defecto
   const [comentarios, setComentarios]=useState("");
   const [priceLists, setPriceLists] = useState([]);
   const [warehouses, setWarehouses] = useState([]);
@@ -94,6 +95,7 @@ const StockTransfer = () => {
     DueDate: formatDate(fecha),
     CardCode: cliente,
     Comments: comentarios,
+    U_LS_COD_CIRUGIA: "Tejidos",
     JournalMemo: `Inventory Transfers - I ${cliente}`,
     FromWarehouse: origen,
     ToWarehouse: destino,
