@@ -3,12 +3,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import ModalCajas from './ModalCajas';
+import { useSession } from "next-auth/react";
 import styles from './Caja.module.css';
 
 export default function Caja() {
   const router = useRouter();
   const [cajas, setCajas] = useState([]);
   const [bodegas, setBodegas] = useState([]);
+  const { data: session } = useSession();
+  const [rol, setRol] = useState(null);
+  const correoUsuario = session?.user?.email || "Sistema";
   const [formulario, setFormulario] = useState({
     CodigoCaja: '',
     FechaCaja: '',
@@ -30,6 +34,32 @@ export default function Caja() {
   const [itemsPorPagina] = useState(5);
   const [mostrarModal, setMostrarModal] = useState(false);
 
+  useEffect(() => {
+  const fetchRol = async () => {
+    try {
+      const res = await fetch("https://pruebas-sap-back.onrender.com/verificar-usuario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo: session?.user?.email }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setRol(data.rol);
+      } else {
+        setRol("user");
+      }
+    } catch (error) {
+      console.error("Error al obtener rol:", error);
+      setRol("user");
+    }
+  };
+
+  if (session?.user?.email && !rol) {
+    fetchRol();
+  }
+}, [session?.user?.email, rol]);
+
   const obtenerCajas = async () => {
     const res = await fetch('https://pruebas-sap-back.onrender.com/cajas-instrumental');
     const data = await res.json();
@@ -45,6 +75,7 @@ export default function Caja() {
       console.error("Error al cargar bodegas", err);
     }
   };
+
 
   useEffect(() => {
     obtenerCajas();
@@ -70,7 +101,9 @@ export default function Caja() {
 
     const res = await fetch(url, {
       method: metodo,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json',
+      'usuario': correoUsuario
+      },
       body: JSON.stringify(formulario)
     });
 
@@ -78,7 +111,7 @@ export default function Caja() {
       const texto = modoEditar ? 'Caja actualizada correctamente' : 'Caja insertada correctamente';
       setMensaje(texto);
       obtenerCajas();
-      limpiarFormulario();
+      if (!modoEditar) limpiarFormulario();
     } else {
       const err = await res.json();
       alert(err.error || 'Error en operación');
@@ -86,24 +119,35 @@ export default function Caja() {
   };
 
   const eliminarCaja = async () => {
-    if (!formulario.CodigoCaja) return alert('Ingrese código para eliminar');
+  if (rol !== 'Administrador') {
+    alert('Solo un administrador puede eliminar una caja.');
+    return;
+  }
 
-    const confirmacion = window.confirm("¿Estás seguro de eliminar esta caja?");
-    if (!confirmacion) return;
+  if (!formulario.CodigoCaja) return alert('Ingrese código para eliminar');
 
-    const res = await fetch(
-      `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`,
-      { method: 'DELETE' }
-    );
+  const confirmacion = window.confirm("¿Estás seguro de eliminar esta caja?");
+  if (!confirmacion) return;
 
-    if (res.ok) {
-      setMensaje('Caja eliminada correctamente');
-      obtenerCajas();
-      limpiarFormulario();
-    } else {
-      alert('Error al eliminar');
+  const res = await fetch(
+    `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`,
+    {
+      method: 'DELETE',
+      headers: {
+        'usuario': correoUsuario
+      }
     }
-  };
+  );
+
+  if (res.ok) {
+    setMensaje('Caja eliminada correctamente');
+    obtenerCajas();
+    limpiarFormulario();
+  } else {
+    alert('Error al eliminar');
+  }
+};
+
 
   const buscarCaja = () => {
     const resultados = cajas.filter((c) => c.CodigoCaja === formulario.CodigoCaja);
@@ -289,19 +333,25 @@ export default function Caja() {
         </select>
 
         <div className={styles.botones}>
-          <button className={styles.boton} onClick={guardarCaja}>
-            {modoEditar ? 'Actualizar' : 'Insertar'}
-          </button>
-          <button className={styles.boton} onClick={buscarCaja}>
-            Buscar
-          </button>
-          <button className={styles.boton} onClick={eliminarCaja}>
-            Eliminar
-          </button>
-          <button className={styles.boton} onClick={limpiarFormulario}>
-            Limpiar
-          </button>
-        </div>
+  <button className={styles.boton} onClick={guardarCaja}>
+    {modoEditar ? 'Actualizar' : 'Insertar'}
+  </button>
+  <button className={styles.boton} onClick={buscarCaja}>
+    Buscar
+  </button>
+  <button className={styles.boton} onClick={eliminarCaja}>
+    Eliminar
+  </button>
+  <button className={styles.boton} onClick={limpiarFormulario}>
+    Limpiar
+  </button>
+  {modoEditar && (
+    <button className={`${styles.boton} ${styles.botonCancelar}`} onClick={limpiarFormulario}>
+      Cancelar Edición
+    </button>
+  )}
+</div>
+
       </div>
 
       <h4 className={styles.subtitulo}>Detalle de Ítems</h4>

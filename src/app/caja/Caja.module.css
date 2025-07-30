@@ -64,26 +64,36 @@
 
 .botones {
   display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1rem;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
 
 .boton {
-  background-color: #00b0f0;
+  background-color: #00aaff;
   color: white;
-  padding: 0.75rem 1.5rem;
   border: none;
+  padding: 10px 14px;
   border-radius: 6px;
-  font-weight: bold;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
 .boton:hover {
-  background-color: #0088cc;
-  transform: scale(1.05);
+  background-color: #0077cc;
 }
+
+.botonCancelar {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+.botonCancelar:hover {
+  background-color: #c7c7c7;
+}
+
 
 .botonEliminar {
   background-color: #e74c3c;
