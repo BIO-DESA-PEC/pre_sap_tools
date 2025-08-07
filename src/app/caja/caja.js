@@ -3,7 +3,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { FaHome, FaSignOutAlt } from 'react-icons/fa';
 import ModalCajas from './ModalCajas';
+import ModalSeleccionItem from './ModalSeleccionItem';
 import { useSession } from "next-auth/react";
+import ModalLogs from './ModalLogs';
 import styles from './Caja.module.css';
 
 export default function Caja() {
@@ -11,8 +13,13 @@ export default function Caja() {
   const [cajas, setCajas] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const { data: session } = useSession();
+  const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' });
   const [observacion, setObservacion] = useState('');
   const [rol, setRol] = useState(null);
+  const [mostrarModalLogs, setMostrarModalLogs] = useState(false);
+  const [logsCaja, setLogsCaja] = useState([]);
+  const [mostrarModalItems, setMostrarModalItems] = useState(false);
+  const [indiceSeleccionado, setIndiceSeleccionado] = useState(null);
   const correoUsuario = session?.user?.email || "Sistema";
   const [formulario, setFormulario] = useState({
     CodigoCaja: '',
@@ -87,6 +94,23 @@ export default function Caja() {
   return obs?.trim() || null;
 };
 
+const verLogsCaja = async () => {
+  if (!formulario.CodigoCaja) {
+    alert("Debe seleccionar una caja.");
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://pruebas-sap-back.onrender.com/logs-caja/${formulario.CodigoCaja}`);
+    const data = await res.json();
+    setLogsCaja(data);
+    setMostrarModalLogs(true);
+  } catch (error) {
+    console.error("Error al obtener logs:", error);
+    alert("Error al obtener los logs.");
+  }
+};
+
 
   const guardarCaja = async () => {
     const confirmacion = window.confirm("¿Estás seguro de actualizar o insertar esta caja?");
@@ -121,7 +145,7 @@ const res = await fetch(url, {
 
     if (res.ok) {
       const texto = modoEditar ? 'Caja actualizada correctamente' : 'Caja insertada correctamente';
-      setMensaje(texto);
+      mostrarToast(texto, 'success');
       obtenerCajas();
       if (!modoEditar) limpiarFormulario();
     } else {
@@ -157,7 +181,7 @@ const res = await fetch(
 
 
   if (res.ok) {
-    setMensaje('Caja eliminada correctamente');
+    mostrarToast('Caja eliminada correctamente', 'success');
     obtenerCajas();
     limpiarFormulario();
   } else {
@@ -190,6 +214,7 @@ const res = await fetch(
       Lineas: detalles
     });
     setModoEditar(true);
+    setPaginaActual(1);  // Reinicia la paginación
   };
 
   const seleccionarCajaDesdeModal = (caja) => {
@@ -217,6 +242,7 @@ const res = await fetch(
 
     setModoEditar(true);
     setMostrarModal(false);
+    setPaginaActual(1);  // Reinicia la paginación
   };
 
   const limpiarFormulario = () => {
@@ -240,15 +266,21 @@ const res = await fetch(
   };
 
   const agregarLinea = () => {
-    const nuevasLineas = [...formulario.Lineas, {
-      CodigoItem: '',
-      CantidadItem: 1,
-      TipoItem: '',
-      LoteItem: '',
-      Descripcion: ''
-    }];
-    setFormulario({ ...formulario, Lineas: nuevasLineas });
-  };
+  const nuevasLineas = [...formulario.Lineas, {
+    CodigoItem: '',
+    CantidadItem: 1,
+    TipoItem: '',
+    LoteItem: '',
+    Descripcion: ''
+  }];
+  setFormulario({ ...formulario, Lineas: nuevasLineas });
+
+  // 👉 Cambiar a última página
+  const nuevaCantidad = nuevasLineas.length;
+  const nuevaTotalPaginas = Math.ceil(nuevaCantidad / itemsPorPagina);
+  setPaginaActual(nuevaTotalPaginas);
+};
+
 
   const eliminarLinea = async (index) => {
   const confirmacion = window.confirm("¿Estás seguro de eliminar esta línea?");
@@ -273,7 +305,7 @@ const res = await fetch(
   });
 
   if (res.ok) {
-    setMensaje('Línea eliminada y caja actualizada correctamente');
+    mostrarToast('Línea eliminada y caja actualizada correctamente', 'success');
     obtenerCajas();
   } else {
     const err = await res.json();
@@ -297,6 +329,21 @@ const res = await fetch(
   };
 
   const totalPaginas = Math.ceil(formulario.Lineas.length / itemsPorPagina);
+const mostrarToast = (mensaje, tipo = 'success') => {
+  setToast({ visible: true, mensaje, tipo });
+  setTimeout(() => setToast({ visible: false, mensaje: '', tipo: 'success' }), 3000);
+};
+const abrirModalSeleccionItem = (index) => {
+  setIndiceSeleccionado(index);
+  setMostrarModalItems(true);
+};
+const seleccionarItemDesdeModal = (item) => {
+  const nuevasLineas = [...formulario.Lineas];
+  nuevasLineas[indiceSeleccionado].CodigoItem = item['Código'];
+  nuevasLineas[indiceSeleccionado].Descripcion = item['Descripción'];
+  setFormulario({ ...formulario, Lineas: nuevasLineas });
+  setMostrarModalItems(false);
+};
 
   return (
     <div className={styles.container}>
@@ -393,7 +440,14 @@ const res = await fetch(
     <button className={`${styles.boton} ${styles.botonCancelar}`} onClick={limpiarFormulario}>
       Cancelar Edición
     </button>
+  
   )}
+  {rol === 'Administrador' && formulario.CodigoCaja && (
+  <button className={styles.boton} onClick={verLogsCaja}>
+    Ver Logs
+  </button>
+)}
+
 </div>
 
       </div>
@@ -411,57 +465,71 @@ const res = await fetch(
           </tr>
         </thead>
         <tbody>
-          {lineasPaginadas.map((linea, index) => (
-            <tr key={index}>
-              <td>
-                <input
-                  className={styles.inputControl}
-                  value={linea.CodigoItem}
-                  onChange={(e) => actualizarLinea(index, 'CodigoItem', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  className={styles.inputControl}
-                  placeholder="Descripción"
-                  value={linea.Descripcion || ''}
-                  onChange={(e) => actualizarLinea(index, 'Descripcion', e.target.value)}
-                />
-              </td>
-              <td>
-                <input
-                  className={styles.inputControl}
-                  type="number"
-                  min="0"
-                  value={linea.CantidadItem}
-                  onChange={(e) => actualizarLinea(index, 'CantidadItem', e.target.value)}
-                />
-              </td>
-              <td>
-                <select
-                  className={styles.inputControl}
-                  value={linea.TipoItem}
-                  onChange={(e) => actualizarLinea(index, 'TipoItem', e.target.value)}
-                >
-                  <option value="">Seleccione</option>
-                  <option value="AF">AF</option>
-                  <option value="VT">VT</option>
-                </select>
-              </td>
-              <td>
-                <input
-                  className={styles.inputControl}
-                  value={linea.LoteItem}
-                  onChange={(e) => actualizarLinea(index, 'LoteItem', e.target.value)}
-                />
-              </td>
-              <td>
-                <button className={styles.botonEliminar} onClick={() => eliminarLinea(index)}>
-                  Eliminar
-                </button>
-              </td>
-            </tr>
-          ))}
+          {lineasPaginadas.map((linea, index) => {
+  const lineaIndexReal = indicePrimerItem + index;
+  return (
+    <tr key={lineaIndexReal}>
+      <td>
+        <div className={styles.inputConIcono}>
+  <input
+    className={styles.inputControl}
+    value={linea.CodigoItem}
+    onChange={(e) => actualizarLinea(lineaIndexReal, 'CodigoItem', e.target.value)}
+  />
+  <button
+    className={styles.iconoLupa}
+    title="Buscar ítem"
+    onClick={() => abrirModalSeleccionItem(lineaIndexReal)}
+  >
+    🔍
+  </button>
+</div>
+
+      </td>
+      <td>
+        <input
+          className={styles.inputControl}
+          placeholder="Descripción"
+          value={linea.Descripcion || ''}
+          onChange={(e) => actualizarLinea(lineaIndexReal, 'Descripcion', e.target.value)}
+        />
+      </td>
+      <td>
+        <input
+          className={styles.inputControl}
+          type="number"
+          min="0"
+          value={linea.CantidadItem}
+          onChange={(e) => actualizarLinea(lineaIndexReal, 'CantidadItem', e.target.value)}
+        />
+      </td>
+      <td>
+        <select
+          className={styles.inputControl}
+          value={linea.TipoItem}
+          onChange={(e) => actualizarLinea(lineaIndexReal, 'TipoItem', e.target.value)}
+        >
+          <option value="">Seleccione</option>
+          <option value="AF">AF</option>
+          <option value="VT">VT</option>
+        </select>
+      </td>
+      <td>
+        <input
+          className={styles.inputControl}
+          value={linea.LoteItem}
+          onChange={(e) => actualizarLinea(lineaIndexReal, 'LoteItem', e.target.value)}
+        />
+      </td>
+      <td>
+        <button className={styles.botonEliminar} onClick={() => eliminarLinea(lineaIndexReal)}>
+          Eliminar
+        </button>
+      </td>
+    </tr>
+  );
+})}
+
         </tbody>
       </table>
 
@@ -485,8 +553,6 @@ const res = await fetch(
 
       <button className={styles.boton} onClick={agregarLinea}>Agregar Ítem</button>
 
-      {mensaje && <p className={styles.mensaje}>{mensaje}</p>}
-
       {mostrarModal && (
         <ModalCajas
           cajas={cajas}
@@ -494,6 +560,26 @@ const res = await fetch(
           onSelect={seleccionarCajaDesdeModal}
         />
       )}
+      {toast.visible && (
+  <div className={`${styles.toast} ${styles[toast.tipo]}`}>
+    {toast.mensaje}
+  </div>
+)}
+{mostrarModalLogs && (
+  <ModalLogs
+    logs={logsCaja}
+    onClose={() => setMostrarModalLogs(false)}
+  />
+)}
+
+{mostrarModalItems && (
+  <ModalSeleccionItem
+    onClose={() => setMostrarModalItems(false)}
+    onSelect={seleccionarItemDesdeModal}
+  />
+)}
+
     </div>
+    
   );
 }

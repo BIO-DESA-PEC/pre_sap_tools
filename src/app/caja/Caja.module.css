@@ -260,3 +260,228 @@
   cursor: pointer;
   color: #333;
 }
+
+.toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ffffff;
+  color: #1c1c1c;
+  padding: 16px 24px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+  font-size: 1rem;
+  font-weight: 500;
+  min-width: 280px;
+  text-align: center;
+  z-index: 2000;
+  animation: slideFade 3s ease-in-out forwards;
+  border-left: 6px solid #4caf50;
+}
+
+.toast.success {
+  border-left-color: #4caf50;
+}
+
+.toast.error {
+  border-left-color: #f44336;
+}
+
+@keyframes slideFade {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+  10% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  90% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(20px);
+  }
+}
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContainer {
+  background: white;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 90%;
+  width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.table th,
+.table td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.table th {
+  background-color: #f4f4f4;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.botonAzul {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.botonAzul:hover {
+  background-color: #0056b3;
+}
+
+.botonCerrar {
+  margin-top: 15px;
+  background-color: #6c757d;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.botonCerrar:hover {
+  background-color: #5a6268;
+}
+
+.paginationContainer {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.paginationButton {
+  padding: 5px 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.paginationButton:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.paginationText {
+  font-weight: bold;
+}
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+}
+
+.modalLogs {
+  background-color: white;
+  width: 90%;
+  max-width: 1000px;
+  max-height: 90%;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalLogsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  background-color: #1f3a93;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.botonCerrar {
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.modalLogsTableContainer {
+  padding: 15px 20px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.tablaLogs {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.tablaLogs th,
+.tablaLogs td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  vertical-align: top;
+}
+
+.tablaLogs th {
+  background-color: #f2f2f2;
+  font-weight: bold;
+}
+
+.detallePre {
+  white-space: pre-wrap;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 13px;
+  color: #2c3e50;
+  max-height: 120px;
+  overflow-y: auto;
+}
