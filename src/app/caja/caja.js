@@ -11,6 +11,7 @@ export default function Caja() {
   const [cajas, setCajas] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const { data: session } = useSession();
+  const [observacion, setObservacion] = useState('');
   const [rol, setRol] = useState(null);
   const correoUsuario = session?.user?.email || "Sistema";
   const [formulario, setFormulario] = useState({
@@ -81,6 +82,11 @@ export default function Caja() {
     obtenerCajas();
     obtenerBodegas();
   }, []);
+  const solicitarObservacion = () => {
+  const obs = prompt("Ingrese una observación para esta acción:");
+  return obs?.trim() || null;
+};
+
 
   const guardarCaja = async () => {
     const confirmacion = window.confirm("¿Estás seguro de actualizar o insertar esta caja?");
@@ -99,13 +105,19 @@ export default function Caja() {
       ? `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`
       : 'https://pruebas-sap-back.onrender.com/cajas-instrumental';
 
-    const res = await fetch(url, {
-      method: metodo,
-      headers: { 'Content-Type': 'application/json',
-      'usuario': correoUsuario
-      },
-      body: JSON.stringify(formulario)
-    });
+    const obs = solicitarObservacion();
+if (!obs) return alert("Debe ingresar una observación para continuar.");
+
+const res = await fetch(url, {
+  method: metodo,
+  headers: {
+    'Content-Type': 'application/json',
+    'usuario': correoUsuario,
+    'observacion': obs
+  },
+  body: JSON.stringify(formulario)
+});
+
 
     if (res.ok) {
       const texto = modoEditar ? 'Caja actualizada correctamente' : 'Caja insertada correctamente';
@@ -129,15 +141,20 @@ export default function Caja() {
   const confirmacion = window.confirm("¿Estás seguro de eliminar esta caja?");
   if (!confirmacion) return;
 
-  const res = await fetch(
-    `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`,
-    {
-      method: 'DELETE',
-      headers: {
-        'usuario': correoUsuario
-      }
+  const obs = solicitarObservacion();
+if (!obs) return alert("Debe ingresar una observación para continuar.");
+
+const res = await fetch(
+  `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`,
+  {
+    method: 'DELETE',
+    headers: {
+      'usuario': correoUsuario,
+      'observacion': obs
     }
-  );
+  }
+);
+
 
   if (res.ok) {
     setMensaje('Caja eliminada correctamente');
@@ -233,10 +250,37 @@ export default function Caja() {
     setFormulario({ ...formulario, Lineas: nuevasLineas });
   };
 
-  const eliminarLinea = (index) => {
-    const nuevasLineas = formulario.Lineas.filter((_, i) => i !== index);
-    setFormulario({ ...formulario, Lineas: nuevasLineas });
-  };
+  const eliminarLinea = async (index) => {
+  const confirmacion = window.confirm("¿Estás seguro de eliminar esta línea?");
+  if (!confirmacion) return;
+
+  const obs = solicitarObservacion();
+  if (!obs) return alert("Debe ingresar una observación para continuar.");
+
+  const nuevasLineas = formulario.Lineas.filter((_, i) => i !== index);
+  const nuevoFormulario = { ...formulario, Lineas: nuevasLineas };
+  setFormulario(nuevoFormulario);
+
+  // Ejecutar actualización inmediatamente
+  const res = await fetch(`https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'usuario': correoUsuario,
+      'observacion': obs
+    },
+    body: JSON.stringify(nuevoFormulario)
+  });
+
+  if (res.ok) {
+    setMensaje('Línea eliminada y caja actualizada correctamente');
+    obtenerCajas();
+  } else {
+    const err = await res.json();
+    alert(err.error || 'Error al actualizar la caja después de eliminar la línea');
+  }
+};
+
 
   const actualizarLinea = (index, campo, valor) => {
     const nuevasLineas = [...formulario.Lineas];
