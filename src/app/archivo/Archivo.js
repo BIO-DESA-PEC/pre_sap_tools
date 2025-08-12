@@ -4,14 +4,69 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css'; // estilos del toast
+import "react-toastify/dist/ReactToastify.css";
 import styles from "./archivo.module.css";
 import { FaFileExcel, FaHome, FaSignOutAlt, FaDownload } from "react-icons/fa";
+
+/* ========= HELPERS ========= */
+const safeParse = (t) => { try { return JSON.parse(t); } catch { return null; } };
+
+// Prioriza DETAILS (que trae el JSON de SAP), luego message.value / value / error
+const extractSapMessage = (rawText) => {
+  // 1) Intentar parsear el body completo
+  const top = safeParse(rawText);
+
+  // Función para extraer mensaje de un objeto SAP-like
+  const getMsgFromObj = (obj) => {
+    if (!obj || typeof obj !== "object") return null;
+
+    // Si trae details primero (puede ser string con JSON)
+    if (obj.details) {
+      if (typeof obj.details === "string") {
+        const inner = safeParse(obj.details);
+        // inner típico: { error: { message: { value: "..." } } }
+        if (inner?.error?.message?.value) return String(inner.error.message.value);
+        if (inner?.message?.value) return String(inner.message.value);
+        if (inner?.value) return String(inner.value);
+        // último intento con regex sobre el string raw
+        const m = obj.details.match(/"value"\s*:\s*"([^"]+)"/) || obj.details.match(/'value'\s*:\s*'([^']+)'/);
+        if (m) return m[1];
+        // si no, devolver details tal cual
+        return String(obj.details);
+      }
+      // details es objeto
+      const d = obj.details;
+      if (d?.error?.message?.value) return String(d.error.message.value);
+      if (d?.message?.value) return String(d.message.value);
+      if (d?.value) return String(d.value);
+    }
+
+    // Sin details o no trajo, probar otras rutas comunes
+    if (obj?.error?.message?.value) return String(obj.error.message.value);
+    if (obj?.message?.value) return String(obj.message.value);
+    if (obj?.value) return String(obj.value);
+    if (obj?.error?.message) return String(obj.error.message);
+    if (obj?.error) return String(obj.error);
+
+    return null;
+  };
+
+  // 2) Si es JSON, intentamos extraer priorizando details
+  const fromTop = getMsgFromObj(top);
+  if (fromTop) return fromTop;
+
+  // 3) Regex directa sobre texto crudo (por si viene escapado)
+  const m = rawText.match(/"value"\s*:\s*"([^"]+)"/) || rawText.match(/'value'\s*:\s*'([^']+)'/);
+  if (m) return m[1];
+
+  // 4) Último recurso: el texto completo
+  return rawText;
+};
+/* =========================== */
 
 export default function UploadFile() {
   const [file, setFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
-
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -21,68 +76,48 @@ export default function UploadFile() {
     return null;
   }
 
-  const handleFileChange = (event) => {
-    setFile(event.target.files[0]);
-  };
+  const handleFileChange = (e) => setFile(e.target.files[0] || null);
 
   const handleUpload = async () => {
-  if (!file) {
-    toast.warn("⚠️ Selecciona un archivo");
-    return;
-  }
+    if (!file) {
+      toast.warn("⚠️ Selecciona un archivo");
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append("file", file);
+    const formData = new FormData();
+    formData.append("file", file);
+    setIsUploading(true);
 
-  setIsUploading(true);
+    try {
+      const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer-archivo", {
+        method: "POST",
+        body: formData,
+      });
 
-  try {
-    const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer-archivo", {
-      method: "POST",
-      body: formData,
-    });
+      // leemos como TEXTO para poder inspeccionar details aunque venga como string JSON
+      const raw = await response.text();
 
-    // 👇 siempre leemos como texto para poder mostrar exactamente lo que ves en "Respuesta"
-    const raw = await response.text();
+      if (!response.ok) {
+        const msg = extractSapMessage(raw);
+        toast.error(`❌ ${msg}`);
+        return;
+      }
 
-    // Intentamos JSON, si no es JSON queda como {}
-    let data = {};
-    try { data = JSON.parse(raw); } catch { /* no es JSON */ }
-
-    // 👇 sacar el mensaje “mejor posible” de varias formas (SAP y variantes)
-    const pickMsg =
-      data?.error?.message?.value ||
-      data?.message?.value ||
-      data?.error?.message ||
-      data?.error ||
-      data?.details ||
-      data?.value ||        // <-- tu caso de la captura
-      raw;                   // si no hay nada, muestra el texto tal cual
-
-    if (!response.ok || data?.success === false) {
-      const cliente = data?.cliente ? ` | Cliente: ${data.cliente}` : "";
-      toast.error(`❌ ${pickMsg}${cliente}`);
-    } else {
       toast.success("✅ ¡Transferencia exitosa!");
       setFile(null);
+    } catch (err) {
+      toast.error(`❌ Error al subir el archivo: ${err?.message || String(err)}`);
+    } finally {
+      setIsUploading(false);
     }
-  } catch (err) {
-    // Error de red / fetch
-    toast.error(`❌ Error al subir el archivo: ${err?.message || String(err)}`);
-  } finally {
-    setIsUploading(false);
-  }
-};
-
-
-  const goToDashboard = () => {
-    router.push("/dashboard");
   };
+
+  const goToDashboard = () => router.push("/dashboard");
 
   return (
     <div className={styles.page}>
       <div className={styles.topBar}>
-        <button onClick={goToDashboard} className={styles.topButton}>
+        <button onClick={goToDashboard} className={styles.topButton} title="Inicio">
           <FaHome />
         </button>
         <h2 className={styles.titleCentered}>Reporte de Inventario</h2>
@@ -116,8 +151,7 @@ export default function UploadFile() {
         {isUploading && <div className={styles.spinner}></div>}
       </div>
 
-      {/* Contenedor de los toasts */}
-      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} />
+      <ToastContainer position="top-right" autoClose={5000} />
     </div>
   );
 }
