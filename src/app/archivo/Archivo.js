@@ -26,38 +26,54 @@ export default function UploadFile() {
   };
 
   const handleUpload = async () => {
-    if (!file) {
-      toast.warn("⚠️ Selecciona un archivo");
-      return;
+  if (!file) {
+    toast.warn("⚠️ Selecciona un archivo");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  setIsUploading(true);
+
+  try {
+    const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer-archivo", {
+      method: "POST",
+      body: formData,
+    });
+
+    // 👇 siempre leemos como texto para poder mostrar exactamente lo que ves en "Respuesta"
+    const raw = await response.text();
+
+    // Intentamos JSON, si no es JSON queda como {}
+    let data = {};
+    try { data = JSON.parse(raw); } catch { /* no es JSON */ }
+
+    // 👇 sacar el mensaje “mejor posible” de varias formas (SAP y variantes)
+    const pickMsg =
+      data?.error?.message?.value ||
+      data?.message?.value ||
+      data?.error?.message ||
+      data?.error ||
+      data?.details ||
+      data?.value ||        // <-- tu caso de la captura
+      raw;                   // si no hay nada, muestra el texto tal cual
+
+    if (!response.ok || data?.success === false) {
+      const cliente = data?.cliente ? ` | Cliente: ${data.cliente}` : "";
+      toast.error(`❌ ${pickMsg}${cliente}`);
+    } else {
+      toast.success("✅ ¡Transferencia exitosa!");
+      setFile(null);
     }
+  } catch (err) {
+    // Error de red / fetch
+    toast.error(`❌ Error al subir el archivo: ${err?.message || String(err)}`);
+  } finally {
+    setIsUploading(false);
+  }
+};
 
-    const formData = new FormData();
-    formData.append("file", file);
-
-    setIsUploading(true);
-
-    try {
-      const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer-archivo", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok) {
-        const errorMsg = data?.error || data?.details || "Error desconocido";
-        const cliente = data?.cliente ? ` | Cliente: ${data.cliente}` : "";
-        toast.error(`❌ ${errorMsg}${cliente}`);
-      } else {
-        toast.success("✅ ¡Transferencia exitosa!");
-        setFile(null);
-      }
-    } catch (error) {
-      toast.error(`❌ Error al subir el archivo: ${error?.message || error.toString()}`);
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const goToDashboard = () => {
     router.push("/dashboard");
