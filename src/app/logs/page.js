@@ -296,13 +296,13 @@ export default function LogsCajaPage() {
 
           <div className={s.headerTitle}>Logs Cajas Instrumental</div>
 
-          <button onClick={onSalir} className={s.iconBtn} title="Salir" aria-label="Salir">
+          <a href="/login" className={s.iconBtn} title="Salir" aria-label="Salir">
             {/* Logout icon (SVG) */}
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M15 7V5a2 2 0 0 0-2-2H6A2 2 0 0 0 4 5v14a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
               <path d="M10 12h10m0 0-3-3m3 3-3 3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-          </button>
+          </a>
         </div>
 
         {/* Filtros */}
