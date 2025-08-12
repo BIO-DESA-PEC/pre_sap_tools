@@ -3,18 +3,18 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css'; // estilos del toast
 import styles from "./archivo.module.css";
 import { FaFileExcel, FaHome, FaSignOutAlt, FaDownload } from "react-icons/fa";
 
 export default function UploadFile() {
   const [file, setFile] = useState(null);
-  const [message, setMessage] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  // Redirección si no hay sesión
   if (status === "loading") return null;
   if (status === "unauthenticated") {
     router.push("/login");
@@ -22,14 +22,12 @@ export default function UploadFile() {
   }
 
   const handleFileChange = (event) => {
-    const selectedFile = event.target.files[0];
-    setFile(selectedFile);
-    setMessage("");
+    setFile(event.target.files[0]);
   };
 
   const handleUpload = async () => {
     if (!file) {
-      setMessage("Selecciona un archivo");
+      toast.warn("⚠️ Selecciona un archivo");
       return;
     }
 
@@ -37,7 +35,6 @@ export default function UploadFile() {
     formData.append("file", file);
 
     setIsUploading(true);
-    setMessage("");
 
     try {
       const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer-archivo", {
@@ -45,22 +42,21 @@ export default function UploadFile() {
         body: formData,
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         const errorMsg = data?.error || data?.details || "Error desconocido";
-        setMessage(`❌ Error: ${errorMsg}`);
+        const cliente = data?.cliente ? ` | Cliente: ${data.cliente}` : "";
+        toast.error(`❌ ${errorMsg}${cliente}`);
       } else {
-        setMessage("✅ ¡Transferencia exitosa!");
+        toast.success("✅ ¡Transferencia exitosa!");
         setFile(null);
-        setTimeout(() => setMessage(""), 3000);
       }
     } catch (error) {
-      setMessage("❌ Error al subir el archivo");
+      toast.error(`❌ Error al subir el archivo: ${error?.message || error.toString()}`);
     } finally {
       setIsUploading(false);
     }
-
   };
 
   const goToDashboard = () => {
@@ -102,8 +98,10 @@ export default function UploadFile() {
         </button>
 
         {isUploading && <div className={styles.spinner}></div>}
-        <p className={styles.message}>{message}</p>
       </div>
+
+      {/* Contenedor de los toasts */}
+      <ToastContainer position="top-right" autoClose={4000} hideProgressBar={false} />
     </div>
   );
 }

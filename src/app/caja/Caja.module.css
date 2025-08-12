@@ -472,16 +472,16 @@
   vertical-align: top;
 }
 
-.tablaLogs th {
-  background-color: #f2f2f2;
-  font-weight: bold;
+.tablaLogs td {
+  padding: 8px;
+  vertical-align: top;
 }
 
+
 .detallePre {
-  white-space: pre-wrap;
-  font-family: 'Courier New', Courier, monospace;
-  font-size: 13px;
-  color: #2c3e50;
-  max-height: 120px;
-  overflow-y: auto;
+  font-family: inherit; /* 🔹 Usa la misma fuente que la tabla */
+  white-space: pre-wrap; /* 🔹 Mantiene saltos de línea pero permite ajustar texto */
+  word-break: break-word; /* 🔹 Evita que el texto largo desborde */
+  margin: 0;
 }
+
