@@ -115,6 +115,7 @@ export default function Dashboard() {
                 <ul className={styles.submenu}>
                   <li><Link href="/caja">UDO Cajas</Link></li>
                   <li><Link href="/archivo_caja">Carga Cajas Masiva</Link></li>
+                   <li><Link href="/logs">Logs Cajas</Link></li>
                 </ul>
               )}
               <li>
