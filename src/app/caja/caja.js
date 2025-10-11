@@ -32,7 +32,9 @@ export default function Caja() {
         CantidadItem: 1,
         TipoItem: '',
         LoteItem: '',
-        Descripcion: ''
+        Descripcion: '',
+        CategoriaDetalleCaja: '',   
+        CodigoItemUnico: ''         
       }
     ]
   });
@@ -199,7 +201,9 @@ const res = await fetch(
       Descripcion: c.Descripcion || '',
       CantidadItem: c.CantidadItem || 1,
       TipoItem: c.TipoItem || '',
-      LoteItem: c.LoteItem || ''
+      LoteItem: c.LoteItem || '',
+      CategoriaDetalleCaja: c.CategoriaDetalleCaja || '', // 👈 NUEVO (si tu vista lo expone)
+      CodigoItemUnico: c.CodigoItemUnico || ''   
     }));
 
     const cabecera = resultados[0];
@@ -225,7 +229,9 @@ const res = await fetch(
         Descripcion: c.Descripcion || '',
         CantidadItem: c.CantidadItem || 1,
         TipoItem: c.TipoItem || '',
-        LoteItem: c.LoteItem || ''
+        LoteItem: c.LoteItem || '',
+        CategoriaDetalleCaja: (c.CategoriaDetalleCaja ?? c.U_LS_CATDET ?? c.categoriadetallecaja) || '',
+        CodigoItemUnico: (c.CodigoItemUnico ?? c.U_LS_CODUNICO ?? c.codigoitemunico) || ''
       }));
 
     const fechaFormateada = caja.FechaCaja
@@ -271,7 +277,9 @@ const res = await fetch(
     CantidadItem: 1,
     TipoItem: '',
     LoteItem: '',
-    Descripcion: ''
+    Descripcion: '',
+    CategoriaDetalleCaja: '',   
+    CodigoItemUnico: ''     
   }];
   setFormulario({ ...formulario, Lineas: nuevasLineas });
 
@@ -341,9 +349,21 @@ const seleccionarItemDesdeModal = (item) => {
   const nuevasLineas = [...formulario.Lineas];
   nuevasLineas[indiceSeleccionado].CodigoItem = item['Código'];
   nuevasLineas[indiceSeleccionado].Descripcion = item['Descripción'];
+  if (item['CodBarras'] || item['CódigoÚnico']) {
+    nuevasLineas[indiceSeleccionado].CodigoItemUnico = item['CodBarras'] || item['CódigoÚnico'];
+  }
   setFormulario({ ...formulario, Lineas: nuevasLineas });
   setMostrarModalItems(false);
 };
+const CATEGORIAS_DETALLE = [
+  "Implantes",
+  "Instrumental",
+  "Consumibles",
+  "Equipos",
+  "Sutura",
+  "Otro",
+];
+
 
   return (
     <div className={styles.container}>
@@ -461,6 +481,8 @@ const seleccionarItemDesdeModal = (item) => {
             <th>Cantidad</th>
             <th>Tipo</th>
             <th>Lote</th>
+            <th>Categoría Detalle</th>   
+            <th>Código Ítem Único</th> 
             <th>Acción</th>
           </tr>
         </thead>
@@ -521,6 +543,32 @@ const seleccionarItemDesdeModal = (item) => {
           onChange={(e) => actualizarLinea(lineaIndexReal, 'LoteItem', e.target.value)}
         />
       </td>
+      
+        <td>
+        <select
+          className={styles.inputControl}
+          value={linea.CategoriaDetalleCaja || ""}
+          onChange={(e) =>
+            actualizarLinea(lineaIndexReal, "CategoriaDetalleCaja", e.target.value)
+          }
+        >
+          <option value="">Seleccione</option>
+          {CATEGORIAS_DETALLE.map((op) => (
+            <option key={op} value={op}>{op}</option>
+          ))}
+        </select>
+      </td>
+
+
+<td>
+  <input
+    className={styles.inputControl}
+    placeholder="Código ítem único"
+    value={linea.CodigoItemUnico || ''}
+    onChange={(e) => actualizarLinea(lineaIndexReal, 'CodigoItemUnico', e.target.value)}
+  />
+</td>
+
       <td>
         <button className={styles.botonEliminar} onClick={() => eliminarLinea(lineaIndexReal)}>
           Eliminar
