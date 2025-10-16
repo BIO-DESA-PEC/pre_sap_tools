@@ -293,6 +293,7 @@ export default function CajasReportePage() {
     </div>
 
       
+      
       <div className={styles.filters}>
         <div className={styles.filterItem}>
           <label>Desde</label>
