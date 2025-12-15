@@ -202,7 +202,7 @@ const res = await fetch(
       CantidadItem: c.CantidadItem || 1,
       TipoItem: c.TipoItem || '',
       LoteItem: c.LoteItem || '',
-      CategoriaDetalleCaja: c.CategoriaDetalleCaja || '', // 👈 NUEVO (si tu vista lo expone)
+      CategoriaDetalleCaja: normalizeCategoria(c.CategoriaDetalleCaja),
       CodigoItemUnico: c.CodigoItemUnico || ''   
     }));
 
@@ -230,7 +230,7 @@ const res = await fetch(
         CantidadItem: c.CantidadItem || 1,
         TipoItem: c.TipoItem || '',
         LoteItem: c.LoteItem || '',
-        CategoriaDetalleCaja: (c.CategoriaDetalleCaja ?? c.U_LS_CATDET ?? c.categoriadetallecaja) || '',
+        CategoriaDetalleCaja: normalizeCategoria(c.CategoriaDetalleCaja ?? c.U_LS_CATDET ?? c.categoriadetallecaja),
         CodigoItemUnico: (c.CodigoItemUnico ?? c.U_LS_CODUNICO ?? c.codigoitemunico) || ''
       }));
 
@@ -355,14 +355,24 @@ const seleccionarItemDesdeModal = (item) => {
   setFormulario({ ...formulario, Lineas: nuevasLineas });
   setMostrarModalItems(false);
 };
-const CATEGORIAS_DETALLE = [
-  "Implantes",
-  "Instrumental",
-  "Consumibles",
-  "Equipos",
-  "Sutura",
-  "Otro",
+const CATEGORIAS_DETALLE_OPTS = [
+  { code: "IMP", label: "Implantes" },
+  { code: "INS", label: "Instrumental" },
+  { code: "CON", label: "Consumibles" },
+  { code: "EQU", label: "Equipos" },
+  { code: "SUT", label: "Sutura" },
+  { code: "OTR", label: "Otro" },
 ];
+
+const codeToLabel = Object.fromEntries(CATEGORIAS_DETALLE_OPTS.map(o => [o.code, o.label]));
+const labelToCode = Object.fromEntries(CATEGORIAS_DETALLE_OPTS.map(o => [o.label, o.code]));
+
+const normalizeCategoria = (v) => {
+  if (!v) return "";
+  const s = String(v).trim();
+  return codeToLabel[s] ? s : (labelToCode[s] || "");
+};
+
 
 
   return (
@@ -546,17 +556,20 @@ const CATEGORIAS_DETALLE = [
       
         <td>
         <select
-          className={styles.inputControl}
-          value={linea.CategoriaDetalleCaja || ""}
-          onChange={(e) =>
-            actualizarLinea(lineaIndexReal, "CategoriaDetalleCaja", e.target.value)
-          }
-        >
-          <option value="">Seleccione</option>
-          {CATEGORIAS_DETALLE.map((op) => (
-            <option key={op} value={op}>{op}</option>
-          ))}
-        </select>
+  className={styles.inputControl}
+  value={linea.CategoriaDetalleCaja || ""}
+  onChange={(e) =>
+    actualizarLinea(lineaIndexReal, "CategoriaDetalleCaja", e.target.value)
+  }
+>
+  <option value="">Seleccione</option>
+  {CATEGORIAS_DETALLE_OPTS.map((op) => (
+    <option key={op.code} value={op.code}>
+      {op.label}
+    </option>
+  ))}
+</select>
+
       </td>
 
 
