@@ -198,7 +198,7 @@ const res = await fetch(
 
     const detalles = resultados.map((c) => ({
       CodigoItem: c.CodigoItem || '',
-      Descripcion: c.Descripcion || '',
+      Descripcion: (c.DescripcionItem ?? c.Descripcion ?? "") || "",
       CantidadItem: c.CantidadItem || 1,
       TipoItem: c.TipoItem || '',
       LoteItem: c.LoteItem || '',
@@ -226,7 +226,7 @@ const res = await fetch(
       .filter((c) => c.CodigoCaja === caja.CodigoCaja)
       .map((c) => ({
         CodigoItem: c.CodigoItem || '',
-        Descripcion: c.Descripcion || '',
+        Descripcion: (c.DescripcionItem ?? c.Descripcion ?? "") || "",
         CantidadItem: c.CantidadItem || 1,
         TipoItem: c.TipoItem || '',
         LoteItem: c.LoteItem || '',
@@ -258,14 +258,16 @@ const res = await fetch(
       Almacen: '',
       ClaseCaja: '',
       Lineas: [
-        {
-          CodigoItem: '',
-          CantidadItem: 1,
-          TipoItem: '',
-          LoteItem: '',
-          Descripcion: ''
-        }
-      ]
+      {
+        CodigoItem: '',
+        CantidadItem: 1,
+        TipoItem: '',
+        LoteItem: '',
+        Descripcion: '',
+        CategoriaDetalleCaja: '',
+        CodigoItemUnico: ''
+      }
+    ]
     });
     setModoEditar(false);
     setMensaje('');
