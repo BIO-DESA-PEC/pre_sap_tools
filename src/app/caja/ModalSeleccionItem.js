@@ -130,35 +130,44 @@ export default function ModalSeleccionItem({ onClose, onSelect }) {
           ) : (
             <table className={styles.modalProTable}>
               <thead>
-                <tr>
-                  <th>Código</th>
-                  <th>Descripción</th>
-                  <th>Grupo</th>
-                  <th>Tipo</th>
-                  <th style={{ width: 140 }}>Acción</th>
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedItems.map((item, idx) => (
-                  <tr key={`${item["Código"] || "x"}-${idx}`}>
-                    <td className={styles.mono}>{item["Código"]}</td>
-                    <td title={item["Descripción"] || ""}>
-                      {item["Descripción"]}
-                    </td>
-                    <td>{item["Grupo de Artículos"]}</td>
-                    <td>{item["Tipo"]}</td>
-                    <td>
-                      <button
-                        className={styles.botonAzul}
-                        onClick={() => handleSelect(item)}
-                        type="button"
-                      >
-                        Seleccionar
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
+  <tr>
+    <th>Código</th>
+    <th>Descripción</th>
+    <th>Grupo</th>
+    <th>Tipo</th>
+    <th>Estado</th>
+    <th>Cód. Prod. Cliente</th>
+    <th>Lote</th>
+    <th>Serie</th>
+    <th>Costo</th>
+    <th style={{ width: 140 }}>Acción</th>
+  </tr>
+</thead>
+  <tbody>
+  {paginatedItems.map((item, idx) => (
+    <tr key={`${item["Código"] || "x"}-${idx}`}>
+      <td className={styles.mono}>{item["Código"]}</td>
+      <td title={item["Descripción"] || ""}>{item["Descripción"]}</td>
+      <td>{item["Grupo de Artículos"]}</td>
+      <td>{item["Tipo"]}</td>
+      <td>{item["Estado"]}</td>
+      <td>{item["Codigo Producto Cliente"]}</td>
+      <td>{item["Lote"]}</td>
+      <td>{item["Serie"]}</td>
+      <td>{item["Costo"]}</td>
+      <td>
+        <button
+          className={styles.botonAzul}
+          onClick={() => handleSelect(item)}
+          type="button"
+        >
+          Seleccionar
+        </button>
+      </td>
+    </tr>
+  ))}
+</tbody>
+
             </table>
           )}
         </div>

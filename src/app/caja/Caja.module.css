@@ -626,6 +626,13 @@
 .modalProCloseBtn:hover {
   background: #5a6268;
 }
+.infoCell{
+  display:block;
+  padding: 6px 4px;
+  color:#444;
+  font-size: 13px;
+}
+
 
 @media (max-width: 720px) {
   .modalProToolbar {
@@ -635,4 +642,242 @@
   .modalProHint {
     white-space: normal;
   }
+}
+/* =========================
+   MODAL IMÁGENES (PRO)
+========================= */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55); /* oscuro suave */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  z-index: 9999;
+  backdrop-filter: blur(3px);
+}
+
+.modalImagenes {
+  width: min(980px, 96vw);
+  max-height: min(78vh, 760px);
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header */
+.modalImagenesHeader {
+  padding: 18px 18px 12px 18px;
+  border-bottom: 1px solid #eef2f7;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modalImagenesTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.modalImagenesTitle h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.modalImagenesTitle small {
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* Boton cerrar */
+.modalCloseX {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #475569;
+  padding: 6px 10px;
+  border-radius: 10px;
+}
+.modalCloseX:hover {
+  background: #f1f5f9;
+}
+
+/* Toolbar */
+.modalImagenesToolbar {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toolbarLeft {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Botones pro */
+.botonPrimary,
+.botonSecondary {
+  border: none;
+  cursor: pointer;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  transition: transform 0.06s ease, box-shadow 0.12s ease, background 0.12s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.botonPrimary {
+  background: #2563eb;
+  color: #fff;
+  box-shadow: 0 10px 22px rgba(37, 99, 235, 0.25);
+}
+.botonPrimary:hover {
+  background: #1d4ed8;
+}
+.botonPrimary:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.22);
+}
+
+.botonSecondary {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.botonSecondary:hover {
+  background: #e2e8f0;
+}
+.botonSecondary:active {
+  transform: translateY(1px);
+}
+
+.toolbarRight {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #64748b;
+  font-size: 12px;
+}
+
+/* Body scrolleable */
+.modalImagenesBody {
+  padding: 14px 18px 18px 18px;
+  overflow: auto;
+}
+
+/* Grid */
+.imagenesGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 980px) {
+  .imagenesGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .imagenesGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .imagenesGrid { grid-template-columns: 1fr; }
+}
+
+/* Card thumbnail */
+.imgCard {
+  background: #fff;
+  border: 1px solid #eef2f7;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+  transition: transform 0.10s ease, box-shadow 0.12s ease;
+}
+
+.imgCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+}
+
+.imgPreview {
+  width: 100%;
+  height: 160px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.imgPreview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* ✅ evita que el barcode se estire */
+  padding: 10px;
+  transform: scale(1);
+  transition: transform 0.18s ease;
+}
+
+.imgCard:hover .imgPreview img {
+  transform: scale(1.04);
+}
+
+/* Footer de la card */
+.imgMeta {
+  padding: 10px 12px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.imgName {
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.imgActions {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.linkBtn {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2563eb;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+}
+.linkBtn:hover {
+  text-decoration: underline;
+}
+
+/* Estado vacío */
+.emptyState {
+  border: 1px dashed #cbd5e1;
+  border-radius: 14px;
+  padding: 18px;
+  background: #f8fafc;
+  color: #475569;
+  font-size: 13px;
 }

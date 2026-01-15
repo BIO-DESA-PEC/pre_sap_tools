@@ -7,6 +7,8 @@ import ModalSeleccionItem from './ModalSeleccionItem';
 import { useSession } from "next-auth/react";
 import ModalLogs from './ModalLogs';
 import styles from './Caja.module.css';
+import ModalImagenesCaja from "./ModalImagenesCaja";
+
 
 export default function Caja() {
   const router = useRouter();
@@ -32,9 +34,7 @@ export default function Caja() {
         CantidadItem: 1,
         TipoItem: '',
         LoteItem: '',
-        Descripcion: '',
-        CategoriaDetalleCaja: '',   
-        CodigoItemUnico: ''         
+        Descripcion: ''
       }
     ]
   });
@@ -43,6 +43,8 @@ export default function Caja() {
   const [paginaActual, setPaginaActual] = useState(1);
   const [itemsPorPagina] = useState(5);
   const [mostrarModal, setMostrarModal] = useState(false);
+  const API_BASE = "https://pruebas-sap-back.onrender.com";
+  const [mostrarModalImagenes, setMostrarModalImagenes] = useState(false);
 
   useEffect(() => {
   const fetchRol = async () => {
@@ -192,64 +194,107 @@ const res = await fetch(
 };
 
 
-  const buscarCaja = () => {
-    const resultados = cajas.filter((c) => c.CodigoCaja === formulario.CodigoCaja);
-    if (!resultados.length) return alert('Caja no encontrada');
+  const fetchCajasFresh = async () => {
+  const res = await fetch("https://pruebas-sap-back.onrender.com/cajas-instrumental", { cache: "no-store" });
+  return await res.json();
+};
 
-    const detalles = resultados.map((c) => ({
-      CodigoItem: c.CodigoItem || '',
-      Descripcion: (c.DescripcionItem ?? c.Descripcion ?? "") || "",
+const enrichLineas = async (lineas) => {
+  // Como todavía NO tienes endpoint /map, hacemos llamadas por item (simple)
+  // Si quieres, luego te hago el /map para que sea rapidísimo.
+  const enriched = await Promise.all(
+    lineas.map(async (l) => {
+      if (!l.CodigoItem) return l;
+
+      try {
+        const r = await fetch(`https://pruebas-sap-back.onrender.com/inventario-af-cajas?q=${encodeURIComponent(l.CodigoItem)}`, { cache: "no-store" });
+        const arr = await r.json();
+        const match = Array.isArray(arr) ? arr.find(x => x["Código"] === l.CodigoItem) : null;
+
+        if (!match) return l;
+
+        return {
+          ...l,
+          Grupo: match["Grupo de Artículos"] || "",
+          Estado: match["Estado"] || "",
+          CodigoProductoCliente: match["Codigo Producto Cliente"] || "",
+          Serie: match["Serie"] || "",
+          Costo: match["Costo"] ?? ""
+        };
+      } catch {
+        return l;
+      }
+    })
+  );
+
+  return enriched;
+};
+
+const buscarCaja = async () => {
+  const cajasFresh = await fetchCajasFresh();
+  setCajas(cajasFresh);
+
+  const resultados = cajasFresh.filter((c) => c.CodigoCaja === formulario.CodigoCaja);
+  if (!resultados.length) return alert("Caja no encontrada");
+
+  const detallesBase = resultados.map((c) => ({
+    CodigoItem: c.CodigoItem || "",
+    Descripcion: c.Descripcion || "",
+    CantidadItem: c.CantidadItem || 1,
+    TipoItem: c.TipoItem || "",
+    LoteItem: c.LoteItem || ""
+  }));
+
+  const cabecera = resultados[0];
+  const fechaOriginal = cabecera.FechaCaja || cabecera.FechaCreacion || cabecera.FechaActualizacion || "";
+  const fechaFormateada = fechaOriginal ? new Date(fechaOriginal).toISOString().split("T")[0] : "";
+
+  const detalles = await enrichLineas(detallesBase);
+
+  setFormulario({
+    CodigoCaja: cabecera.CodigoCaja,
+    FechaCaja: fechaFormateada,
+    ClaseCaja: cabecera.ClaseCaja,
+    Almacen: cabecera.Almacen,
+    Lineas: detalles
+  });
+
+  setModoEditar(true);
+  setPaginaActual(1);
+};
+
+
+  const seleccionarCajaDesdeModal = async (caja) => {
+  const cajasFresh = await fetchCajasFresh();
+  setCajas(cajasFresh);
+
+  const detallesBase = cajasFresh
+    .filter((c) => c.CodigoCaja === caja.CodigoCaja)
+    .map((c) => ({
+      CodigoItem: c.CodigoItem || "",
+      Descripcion: c.Descripcion || "",
       CantidadItem: c.CantidadItem || 1,
-      TipoItem: c.TipoItem || '',
-      LoteItem: c.LoteItem || '',
-      CategoriaDetalleCaja: normalizeCategoria(c.CategoriaDetalleCaja),
-      CodigoItemUnico: c.CodigoItemUnico || ''   
+      TipoItem: c.TipoItem || "",
+      LoteItem: c.LoteItem || ""
     }));
 
-    const cabecera = resultados[0];
-    const fechaOriginal = cabecera.FechaCaja || cabecera.FechaCreacion || cabecera.FechaActualizacion || '';
-    const fechaFormateada = fechaOriginal ? new Date(fechaOriginal).toISOString().split('T')[0] : '';
+  const detalles = await enrichLineas(detallesBase);
 
-    setFormulario({
-      CodigoCaja: cabecera.CodigoCaja,
-      FechaCaja: fechaFormateada,
-      ClaseCaja: cabecera.ClaseCaja,
-      Almacen: cabecera.Almacen,
-      Lineas: detalles
-    });
-    setModoEditar(true);
-    setPaginaActual(1);  // Reinicia la paginación
-  };
+  const fechaFormateada = caja.FechaCaja ? new Date(caja.FechaCaja).toISOString().split("T")[0] : "";
 
-  const seleccionarCajaDesdeModal = (caja) => {
-    const detalles = cajas
-      .filter((c) => c.CodigoCaja === caja.CodigoCaja)
-      .map((c) => ({
-        CodigoItem: c.CodigoItem || '',
-        Descripcion: (c.DescripcionItem ?? c.Descripcion ?? "") || "",
-        CantidadItem: c.CantidadItem || 1,
-        TipoItem: c.TipoItem || '',
-        LoteItem: c.LoteItem || '',
-        CategoriaDetalleCaja: normalizeCategoria(c.CategoriaDetalleCaja ?? c.U_LS_CATDET ?? c.categoriadetallecaja),
-        CodigoItemUnico: (c.CodigoItemUnico ?? c.U_LS_CODUNICO ?? c.codigoitemunico) || ''
-      }));
+  setFormulario({
+    CodigoCaja: caja.CodigoCaja,
+    FechaCaja: fechaFormateada,
+    ClaseCaja: caja.ClaseCaja,
+    Almacen: caja.Almacen,
+    Lineas: detalles
+  });
 
-    const fechaFormateada = caja.FechaCaja
-      ? new Date(caja.FechaCaja).toISOString().split('T')[0]
-      : '';
+  setModoEditar(true);
+  setMostrarModal(false);
+  setPaginaActual(1);
+};
 
-    setFormulario({
-      CodigoCaja: caja.CodigoCaja,
-      FechaCaja: fechaFormateada,
-      ClaseCaja: caja.ClaseCaja,
-      Almacen: caja.Almacen,
-      Lineas: detalles
-    });
-
-    setModoEditar(true);
-    setMostrarModal(false);
-    setPaginaActual(1);  // Reinicia la paginación
-  };
 
   const limpiarFormulario = () => {
     setFormulario({
@@ -258,16 +303,14 @@ const res = await fetch(
       Almacen: '',
       ClaseCaja: '',
       Lineas: [
-      {
-        CodigoItem: '',
-        CantidadItem: 1,
-        TipoItem: '',
-        LoteItem: '',
-        Descripcion: '',
-        CategoriaDetalleCaja: '',
-        CodigoItemUnico: ''
-      }
-    ]
+        {
+          CodigoItem: '',
+          CantidadItem: 1,
+          TipoItem: '',
+          LoteItem: '',
+          Descripcion: ''
+        }
+      ]
     });
     setModoEditar(false);
     setMensaje('');
@@ -279,9 +322,7 @@ const res = await fetch(
     CantidadItem: 1,
     TipoItem: '',
     LoteItem: '',
-    Descripcion: '',
-    CategoriaDetalleCaja: '',   
-    CodigoItemUnico: ''     
+    Descripcion: ''
   }];
   setFormulario({ ...formulario, Lineas: nuevasLineas });
 
@@ -349,32 +390,31 @@ const abrirModalSeleccionItem = (index) => {
 };
 const seleccionarItemDesdeModal = (item) => {
   const nuevasLineas = [...formulario.Lineas];
-  nuevasLineas[indiceSeleccionado].CodigoItem = item['Código'];
-  nuevasLineas[indiceSeleccionado].Descripcion = item['Descripción'];
-  if (item['CodBarras'] || item['CódigoÚnico']) {
-    nuevasLineas[indiceSeleccionado].CodigoItemUnico = item['CodBarras'] || item['CódigoÚnico'];
-  }
+
+  nuevasLineas[indiceSeleccionado].CodigoItem = item["Código"] || "";
+  nuevasLineas[indiceSeleccionado].Descripcion = item["Descripción"] || "";
+
+  // Tipo calculado AF / VT desde la vista
+  const tipoVista = (item["Tipo"] || "").toLowerCase();
+  nuevasLineas[indiceSeleccionado].TipoItem = tipoVista.includes("activo fijo") ? "AF" : "VT";
+
+  // Lote (si viene)
+  nuevasLineas[indiceSeleccionado].LoteItem = item["Lote"] || "";
+
+  // ✅ CAMPOS INFORMATIVOS (no editables)
+  nuevasLineas[indiceSeleccionado].Grupo = item["Grupo de Artículos"] || "";
+  nuevasLineas[indiceSeleccionado].Estado = item["Estado"] || "";
+  nuevasLineas[indiceSeleccionado].CodigoProductoCliente = item["Codigo Producto Cliente"] || "";
+  nuevasLineas[indiceSeleccionado].Serie = item["Serie"] || "";
+  nuevasLineas[indiceSeleccionado].Costo = item["Costo"] ?? "";
+
+  // (Opcional)
+  nuevasLineas[indiceSeleccionado].CodigoClaseAF = item["Codigo Clase AF"] || "";
+  nuevasLineas[indiceSeleccionado].NombreClaseAF = item["Nombre Clase AF"] || "";
+
   setFormulario({ ...formulario, Lineas: nuevasLineas });
   setMostrarModalItems(false);
 };
-const CATEGORIAS_DETALLE_OPTS = [
-  { code: "IMP", label: "Implantes" },
-  { code: "INS", label: "Instrumental" },
-  { code: "CON", label: "Consumibles" },
-  { code: "EQU", label: "Equipos" },
-  { code: "SUT", label: "Sutura" },
-  { code: "OTR", label: "Otro" },
-];
-
-const codeToLabel = Object.fromEntries(CATEGORIAS_DETALLE_OPTS.map(o => [o.code, o.label]));
-const labelToCode = Object.fromEntries(CATEGORIAS_DETALLE_OPTS.map(o => [o.label, o.code]));
-
-const normalizeCategoria = (v) => {
-  if (!v) return "";
-  const s = String(v).trim();
-  return codeToLabel[s] ? s : (labelToCode[s] || "");
-};
-
 
 
   return (
@@ -478,7 +518,17 @@ const normalizeCategoria = (v) => {
   <button className={styles.boton} onClick={verLogsCaja}>
     Ver Logs
   </button>
+  
 )}
+{/* ✅ AQUÍ MISMO VA EL BOTÓN DE IMÁGENES */}
+  {formulario.CodigoCaja && (
+    <button
+      className={styles.boton}
+      onClick={() => setMostrarModalImagenes(true)}
+    >
+      Ver Imágenes
+    </button>
+  )}
 
 </div>
 
@@ -487,110 +537,111 @@ const normalizeCategoria = (v) => {
       <h4 className={styles.subtitulo}>Detalle de Ítems</h4>
       <table className={styles.tabla}>
         <thead>
-          <tr>
-            <th>Código Ítem</th>
-            <th>Descripción</th>
-            <th>Cantidad</th>
-            <th>Tipo</th>
-            <th>Lote</th>
-            <th>Categoría Detalle</th>   
-            <th>Código Ítem Único</th> 
-            <th>Acción</th>
-          </tr>
-        </thead>
+  <tr>
+    <th>Código Ítem</th>
+    <th>Descripción</th>
+    <th>Cantidad</th>
+    <th>Tipo</th>
+    <th>Lote</th>
+
+    {/* ✅ NUEVAS (SOLO INFORMATIVAS) */}
+    <th>Grupo</th>
+    <th>Estado</th>
+    <th>Cód. Prod. Cliente</th>
+    <th>Serie</th>
+    <th>Costo</th>
+
+    <th>Acción</th>
+  </tr>
+</thead>
+
         <tbody>
           {lineasPaginadas.map((linea, index) => {
   const lineaIndexReal = indicePrimerItem + index;
   return (
-    <tr key={lineaIndexReal}>
-      <td>
-        <div className={styles.inputConIcono}>
-  <input
-    className={styles.inputControl}
-    value={linea.CodigoItem}
-    onChange={(e) => actualizarLinea(lineaIndexReal, 'CodigoItem', e.target.value)}
-  />
-  <button
-    className={styles.iconoLupa}
-    title="Buscar ítem"
-    onClick={() => abrirModalSeleccionItem(lineaIndexReal)}
-  >
-    🔍
-  </button>
-</div>
+  <tr key={lineaIndexReal}>
+  {/* Código */}
+  <td>
+    <div className={styles.inputConIcono}>
+      <input
+        className={styles.inputControl}
+        value={linea.CodigoItem}
+        onChange={(e) => actualizarLinea(lineaIndexReal, "CodigoItem", e.target.value)}
+      />
+      <button
+        className={styles.iconoLupa}
+        title="Buscar ítem"
+        onClick={() => abrirModalSeleccionItem(lineaIndexReal)}
+      >
+        🔍
+      </button>
+    </div>
+  </td>
 
-      </td>
-      <td>
-        <input
-          className={styles.inputControl}
-          placeholder="Descripción"
-          value={linea.Descripcion || ''}
-          onChange={(e) => actualizarLinea(lineaIndexReal, 'Descripcion', e.target.value)}
-        />
-      </td>
-      <td>
-        <input
-          className={styles.inputControl}
-          type="number"
-          min="0"
-          value={linea.CantidadItem}
-          onChange={(e) => actualizarLinea(lineaIndexReal, 'CantidadItem', e.target.value)}
-        />
-      </td>
-      <td>
-        <select
-          className={styles.inputControl}
-          value={linea.TipoItem}
-          onChange={(e) => actualizarLinea(lineaIndexReal, 'TipoItem', e.target.value)}
-        >
-          <option value="">Seleccione</option>
-          <option value="AF">AF</option>
-          <option value="VT">VT</option>
-        </select>
-      </td>
-      <td>
-        <input
-          className={styles.inputControl}
-          value={linea.LoteItem}
-          onChange={(e) => actualizarLinea(lineaIndexReal, 'LoteItem', e.target.value)}
-        />
-      </td>
-      
-        <td>
-        <select
-  className={styles.inputControl}
-  value={linea.CategoriaDetalleCaja || ""}
-  onChange={(e) =>
-    actualizarLinea(lineaIndexReal, "CategoriaDetalleCaja", e.target.value)
-  }
->
-  <option value="">Seleccione</option>
-  {CATEGORIAS_DETALLE_OPTS.map((op) => (
-    <option key={op.code} value={op.code}>
-      {op.label}
-    </option>
-  ))}
-</select>
+  {/* Descripción */}
+  <td>
+    <input
+      className={styles.inputControl}
+      placeholder="Descripción"
+      value={linea.Descripcion || ""}
+      onChange={(e) => actualizarLinea(lineaIndexReal, "Descripcion", e.target.value)}
+    />
+  </td>
 
-      </td>
+  {/* Cantidad */}
+  <td>
+    <input
+      className={styles.inputControl}
+      type="number"
+      min="0"
+      value={linea.CantidadItem}
+      onChange={(e) => actualizarLinea(lineaIndexReal, "CantidadItem", e.target.value)}
+    />
+  </td>
 
+  {/* Tipo */}
+  <td>
+    <select
+      className={styles.inputControl}
+      value={linea.TipoItem}
+      onChange={(e) => actualizarLinea(lineaIndexReal, "TipoItem", e.target.value)}
+    >
+      <option value="">Seleccione</option>
+      <option value="AF">AF</option>
+      <option value="VT">VT</option>
+    </select>
+  </td>
 
-<td>
-  <input
-    className={styles.inputControl}
-    placeholder="Código ítem único"
-    value={linea.CodigoItemUnico || ''}
-    onChange={(e) => actualizarLinea(lineaIndexReal, 'CodigoItemUnico', e.target.value)}
-  />
-</td>
+  {/* Lote */}
+  <td>
+    <input
+      className={styles.inputControl}
+      value={linea.LoteItem || ""}
+      onChange={(e) => actualizarLinea(lineaIndexReal, "LoteItem", e.target.value)}
+    />
+  </td>
 
-      <td>
-        <button className={styles.botonEliminar} onClick={() => eliminarLinea(lineaIndexReal)}>
-          Eliminar
-        </button>
-      </td>
-    </tr>
-  );
+  {/* ✅ INFORMATIVOS (NO EDITABLES) */}
+  <td><span className={styles.infoCell}>{linea.Grupo || "—"}</span></td>
+  <td><span className={styles.infoCell}>{linea.Estado || "—"}</span></td>
+  <td><span className={styles.infoCell}>{linea.CodigoProductoCliente || "—"}</span></td>
+  <td><span className={styles.infoCell}>{linea.Serie || "—"}</span></td>
+  <td>
+    <span className={styles.infoCell}>
+      {linea.Costo !== null && linea.Costo !== undefined && linea.Costo !== "" ? linea.Costo : "—"}
+    </span>
+  </td>
+
+  {/* Acción */}
+  <td>
+    <button className={styles.botonEliminar} onClick={() => eliminarLinea(lineaIndexReal)}>
+      Eliminar
+    </button>
+  </td>
+</tr>
+
+);
+
 })}
 
         </tbody>
@@ -639,6 +690,14 @@ const normalizeCategoria = (v) => {
   <ModalSeleccionItem
     onClose={() => setMostrarModalItems(false)}
     onSelect={seleccionarItemDesdeModal}
+  />
+)}
+{mostrarModalImagenes && (
+  <ModalImagenesCaja
+    open={mostrarModalImagenes}
+    onClose={() => setMostrarModalImagenes(false)}
+    codigoCaja={formulario.CodigoCaja}
+    apiBase={API_BASE}
   />
 )}
 
