@@ -7,7 +7,7 @@ import * as XLSX from "xlsx";
 import { useRouter } from "next/navigation";
 import { FaHome, FaSignOutAlt, FaEye, FaDownload } from "react-icons/fa";
 
-const API_BASE = "https://pruebas-sap-back.onrender.com";
+const API_BASE = "https://pruebas-sap.onrender.com";
 
 async function safeFetchJSON(url, opts) {
   try {

@@ -37,7 +37,7 @@ const Report = () => {
 
   const fetchItems = async () => {
     try {
-      const response = await axios.get("https://pruebas-sap-back.onrender.com/items");
+      const response = await axios.get("https://pruebas-sap.onrender.com/items");
       setItems(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error("Error al obtener los ítems:", error);
@@ -46,7 +46,7 @@ const Report = () => {
 
   const fetchBodegas = async () => {
     try {
-      const response = await axios.get("https://pruebas-sap-back.onrender.com/get-warehouses");
+      const response = await axios.get("https://pruebas-sap.onrender.com/get-warehouses");
       setBodegasList(response.data.warehouses || []);
     } catch (error) {
       console.error("Error al obtener las bodegas:", error);
@@ -60,7 +60,7 @@ const Report = () => {
     }
     setError(null);
     try {
-      const response = await axios.get("https://pruebas-sap-back.onrender.com/reportinventario", {
+      const response = await axios.get("https://pruebas-sap.onrender.com/reportinventario", {
         params: {
           fecha_actualizacion: fecha,
           codigo_item: codigoItem || undefined,

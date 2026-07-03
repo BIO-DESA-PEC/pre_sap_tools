@@ -37,8 +37,8 @@ export default function Transfer() {
     const fetchData = async () => {
       try {
         const [transfersRes, bodegasRes] = await Promise.all([
-          fetch("https://pruebas-sap-back.onrender.com/stock-transfers-filtradas"),
-          fetch("https://pruebas-sap-back.onrender.com/warehouses"),
+          fetch("https://pruebas-sap.onrender.com/stock-transfers-filtradas"),
+          fetch("https://pruebas-sap.onrender.com/warehouses"),
         ]);
 
         const [transfersData, bodegasDataRaw] = await Promise.all([
@@ -68,7 +68,7 @@ export default function Transfer() {
     setDocEntryCargando(transfer.DocEntry);
     try {
       const detalleRes = await fetch(
-        `https://pruebas-sap-back.onrender.com/get_stock_transfer_detail/${transfer.DocEntry}`
+        `https://pruebas-sap.onrender.com/get_stock_transfer_detail/${transfer.DocEntry}`
       );
       const detalleData = await detalleRes.json();
       setTransferSeleccionada({ ...detalleData, bodegas });

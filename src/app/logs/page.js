@@ -7,7 +7,7 @@ import autoTable from "jspdf-autotable";
 import * as XLSX from "xlsx";
 import s from "./logs.module.css";
 
-const API_BASE = "https://pruebas-sap-back.onrender.com";
+const API_BASE = "https://pruebas-sap.onrender.com";
 
 export default function LogsCajaPage() {
   const [codigoCaja, setCodigoCaja] = useState("");

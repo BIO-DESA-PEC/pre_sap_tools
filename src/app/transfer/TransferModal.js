@@ -15,7 +15,7 @@ export default function TransferModal({ transfer, onClose, bodegas = [] }) {
       setLoading(true);
       try {
         const response = await fetch(
-          `https://pruebas-sap-back.onrender.com/get_stock_transfer_detail/${transfer.DocEntry}`
+          `https://pruebas-sap.onrender.com/get_stock_transfer_detail/${transfer.DocEntry}`
         );
         const data = await response.json();
         setDetalleCompleto(data);

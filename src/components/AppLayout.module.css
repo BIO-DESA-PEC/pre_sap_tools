@@ -1,0 +1,102 @@
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #f4f7fb;
+}
+
+.sidebar {
+  width: 260px;
+  min-height: 100vh;
+  background: #2f4356;
+  color: white;
+  position: fixed;
+  left: 0;
+  top: 0;
+  padding: 28px 0;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 900;
+  padding: 0 24px;
+  margin-bottom: 70px;
+}
+
+.navList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navList li {
+  cursor: pointer;
+}
+
+.navList a,
+.hasSubmenu {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  text-decoration: none;
+  padding: 13px 20px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.navList a:hover,
+.hasSubmenu:hover,
+.active a {
+  background: rgba(255, 255, 255, 0.14);
+  border-left: 4px solid #60a5fa;
+}
+
+.submenu {
+  list-style: none;
+  padding-left: 22px;
+  margin: 0;
+}
+
+.submenu a {
+  font-size: 14px;
+  padding: 10px 20px;
+}
+
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 18px 12px;
+  border-top: 1px solid rgba(255,255,255,0.18);
+}
+
+.footer span {
+  display: block;
+  margin-bottom: 14px;
+  font-size: 15px;
+}
+
+.logout {
+  width: 100%;
+  border: none;
+  background: #ef4444;
+  color: white;
+  padding: 13px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.content {
+  margin-left: 260px;
+  width: calc(100% - 260px);
+  min-height: 100vh;
+}
+
+.loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 800;
+}

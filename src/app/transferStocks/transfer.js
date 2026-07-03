@@ -82,7 +82,7 @@ const StockTransfer = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer", {
+      const response = await fetch("https://pruebas-sap.onrender.com/stock-transfer", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -257,7 +257,7 @@ const removeLastItemLine = () => {
    useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch("https://pruebas-sap-back.onrender.com/items");
+        const response = await fetch("https://pruebas-sap.onrender.com/items");
         const data = await response.json();
         setItems(data); // Asume que data contiene la lista de ítems
       } catch (error) {
@@ -281,7 +281,7 @@ const removeLastItemLine = () => {
 
   const fetchBatchNumbers = async (itemCode) => {
     try {
-      const response = await fetch(`https://pruebas-sap-back.onrender.com/inventario?codigo_item=${itemCode}&codigo_almacen=${origen}`);
+      const response = await fetch(`https://pruebas-sap.onrender.com/inventario?codigo_item=${itemCode}&codigo_almacen=${origen}`);
       const text = await response.text();
       const data = JSON.parse(text);
   
@@ -313,7 +313,7 @@ const removeLastItemLine = () => {
   useEffect(() => {
     const fetchWarehouses = async () => {
       try {
-        const response = await fetch("https://pruebas-sap-back.onrender.com/get-warehouses");
+        const response = await fetch("https://pruebas-sap.onrender.com/get-warehouses");
         const data = await response.json();
         setWarehouses(data.warehouses); // Asumiendo que el backend devuelve la lista de bodegas
       } catch (error) {
@@ -332,7 +332,7 @@ useEffect(() => {
     const signal = controller.signal;
 
     try {
-      const response = await fetch(`https://pruebas-sap-back.onrender.com/business-partner-price-list/${cliente}`, { signal });
+      const response = await fetch(`https://pruebas-sap.onrender.com/business-partner-price-list/${cliente}`, { signal });
 
       if (!response.ok) {
         throw new Error(`Error HTTP: ${response.status} - ${response.statusText}`);

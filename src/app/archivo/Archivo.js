@@ -89,7 +89,7 @@ export default function UploadFile() {
     setIsUploading(true);
 
     try {
-      const response = await fetch("https://pruebas-sap-back.onrender.com/stock-transfer-archivo", {
+      const response = await fetch("https://pruebas-sap.onrender.com/stock-transfer-archivo", {
         method: "POST",
         body: formData,
       });

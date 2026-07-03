@@ -9,20 +9,27 @@ import ModalLogs from './ModalLogs';
 import styles from './Caja.module.css';
 import ModalImagenesCaja from "./ModalImagenesCaja";
 
-
 export default function Caja() {
   const router = useRouter();
   const [cajas, setCajas] = useState([]);
   const [bodegas, setBodegas] = useState([]);
   const { data: session } = useSession();
   const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' });
-  const [observacion, setObservacion] = useState('');
   const [rol, setRol] = useState(null);
   const [mostrarModalLogs, setMostrarModalLogs] = useState(false);
   const [logsCaja, setLogsCaja] = useState([]);
   const [mostrarModalItems, setMostrarModalItems] = useState(false);
   const [indiceSeleccionado, setIndiceSeleccionado] = useState(null);
+  const [modoEditar, setModoEditar] = useState(false);
+  const [mensaje, setMensaje] = useState('');
+  const [paginaActual, setPaginaActual] = useState(1);
+  const [itemsPorPagina] = useState(5);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [mostrarModalImagenes, setMostrarModalImagenes] = useState(false);
+
   const correoUsuario = session?.user?.email || "Sistema";
+  const API_BASE = "https://pruebas-sap.onrender.com";
+
   const [formulario, setFormulario] = useState({
     CodigoCaja: '',
     FechaCaja: '',
@@ -34,53 +41,52 @@ export default function Caja() {
         CantidadItem: 1,
         TipoItem: '',
         LoteItem: '',
-        Descripcion: ''
+        Descripcion: '',
+        IndividualSet: 'I',
+        SerieCaja: ''
       }
     ]
   });
-  const [modoEditar, setModoEditar] = useState(false);
-  const [mensaje, setMensaje] = useState('');
-  const [paginaActual, setPaginaActual] = useState(1);
-  const [itemsPorPagina] = useState(5);
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const API_BASE = "https://pruebas-sap-back.onrender.com";
-  const [mostrarModalImagenes, setMostrarModalImagenes] = useState(false);
 
+  // =========================
+  // ROL
+  // =========================
   useEffect(() => {
-  const fetchRol = async () => {
-    try {
-      const res = await fetch("https://pruebas-sap-back.onrender.com/verificar-usuario", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ correo: session?.user?.email }),
-      });
+    const fetchRol = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/verificar-usuario`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correo: session?.user?.email }),
+        });
 
-      if (res.ok) {
-        const data = await res.json();
-        setRol(data.rol);
-      } else {
+        if (res.ok) {
+          const data = await res.json();
+          setRol(data.rol);
+        } else {
+          setRol("user");
+        }
+      } catch (error) {
+        console.error("Error al obtener rol:", error);
         setRol("user");
       }
-    } catch (error) {
-      console.error("Error al obtener rol:", error);
-      setRol("user");
-    }
-  };
+    };
 
-  if (session?.user?.email && !rol) {
-    fetchRol();
-  }
-}, [session?.user?.email, rol]);
+    if (session?.user?.email && !rol) fetchRol();
+  }, [session?.user?.email, rol]);
 
+  // =========================
+  // DATA INICIAL
+  // =========================
   const obtenerCajas = async () => {
-    const res = await fetch('https://pruebas-sap-back.onrender.com/cajas-instrumental');
+    const res = await fetch(`${API_BASE}/cajas-instrumental`);
     const data = await res.json();
     setCajas(data);
   };
 
   const obtenerBodegas = async () => {
     try {
-      const res = await fetch('https://pruebas-sap-back.onrender.com/warehouses');
+      const res = await fetch(`${API_BASE}/warehouses`);
       const data = await res.json();
       setBodegas(data.warehouses || []);
     } catch (err) {
@@ -88,34 +94,82 @@ export default function Caja() {
     }
   };
 
-
   useEffect(() => {
     obtenerCajas();
     obtenerBodegas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // =========================
+  // HELPERS
+  // =========================
   const solicitarObservacion = () => {
-  const obs = prompt("Ingrese una observación para esta acción:");
-  return obs?.trim() || null;
-};
+    const obs = prompt("Ingrese una observación para esta acción:");
+    return obs?.trim() || null;
+  };
 
-const verLogsCaja = async () => {
-  if (!formulario.CodigoCaja) {
-    alert("Debe seleccionar una caja.");
-    return;
-  }
+  const mostrarToast = (mensaje, tipo = 'success') => {
+    setToast({ visible: true, mensaje, tipo });
+    setTimeout(() => setToast({ visible: false, mensaje: '', tipo: 'success' }), 3000);
+  };
 
-  try {
-    const res = await fetch(`https://pruebas-sap-back.onrender.com/logs-caja/${formulario.CodigoCaja}`);
-    const data = await res.json();
-    setLogsCaja(data);
-    setMostrarModalLogs(true);
-  } catch (error) {
-    console.error("Error al obtener logs:", error);
-    alert("Error al obtener los logs.");
-  }
-};
+  const fetchCajasFresh = async () => {
+    const res = await fetch(`${API_BASE}/cajas-instrumental`, { cache: "no-store" });
+    return await res.json();
+  };
 
+  const enrichLineas = async (lineas) => {
+    const enriched = await Promise.all(
+      lineas.map(async (l) => {
+        if (!l.CodigoItem) return l;
 
+        try {
+          const r = await fetch(`${API_BASE}/inventario-af-cajas?q=${encodeURIComponent(l.CodigoItem)}`, { cache: "no-store" });
+          const arr = await r.json();
+          const match = Array.isArray(arr) ? arr.find(x => x["Código"] === l.CodigoItem) : null;
+
+          if (!match) return l;
+
+          return {
+            ...l, // 👈 no borra SerieCaja/IndividualSet
+            Grupo: match["Grupo de Artículos"] || "",
+            Estado: match["Estado"] || "",
+            CodigoProductoCliente: match["Codigo Producto Cliente"] || "",
+            SerieAF: match["Serie"] || "",
+            Costo: match["Costo"] ?? ""
+          };
+        } catch {
+          return l;
+        }
+      })
+    );
+
+    return enriched;
+  };
+
+  // =========================
+  // LOGS
+  // =========================
+  const verLogsCaja = async () => {
+    if (!formulario.CodigoCaja) {
+      alert("Debe seleccionar una caja.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/logs-caja/${formulario.CodigoCaja}`);
+      const data = await res.json();
+      setLogsCaja(data);
+      setMostrarModalLogs(true);
+    } catch (error) {
+      console.error("Error al obtener logs:", error);
+      alert("Error al obtener los logs.");
+    }
+  };
+
+  // =========================
+  // CRUD CABEZA
+  // =========================
   const guardarCaja = async () => {
     const confirmacion = window.confirm("¿Estás seguro de actualizar o insertar esta caja?");
     if (!confirmacion) return;
@@ -130,22 +184,21 @@ const verLogsCaja = async () => {
 
     const metodo = modoEditar ? 'PUT' : 'POST';
     const url = modoEditar
-      ? `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`
-      : 'https://pruebas-sap-back.onrender.com/cajas-instrumental';
+      ? `${API_BASE}/cajas-instrumental/${formulario.CodigoCaja}`
+      : `${API_BASE}/cajas-instrumental`;
 
     const obs = solicitarObservacion();
-if (!obs) return alert("Debe ingresar una observación para continuar.");
+    if (!obs) return alert("Debe ingresar una observación para continuar.");
 
-const res = await fetch(url, {
-  method: metodo,
-  headers: {
-    'Content-Type': 'application/json',
-    'usuario': correoUsuario,
-    'observacion': obs
-  },
-  body: JSON.stringify(formulario)
-});
-
+    const res = await fetch(url, {
+      method: metodo,
+      headers: {
+        'Content-Type': 'application/json',
+        'usuario': correoUsuario,
+        'observacion': obs
+      },
+      body: JSON.stringify(formulario)
+    });
 
     if (res.ok) {
       const texto = modoEditar ? 'Caja actualizada correctamente' : 'Caja insertada correctamente';
@@ -159,143 +212,115 @@ const res = await fetch(url, {
   };
 
   const eliminarCaja = async () => {
-  if (rol !== 'Administrador') {
-    alert('Solo un administrador puede eliminar una caja.');
-    return;
-  }
-
-  if (!formulario.CodigoCaja) return alert('Ingrese código para eliminar');
-
-  const confirmacion = window.confirm("¿Estás seguro de eliminar esta caja?");
-  if (!confirmacion) return;
-
-  const obs = solicitarObservacion();
-if (!obs) return alert("Debe ingresar una observación para continuar.");
-
-const res = await fetch(
-  `https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`,
-  {
-    method: 'DELETE',
-    headers: {
-      'usuario': correoUsuario,
-      'observacion': obs
+    if (rol !== 'Administrador') {
+      alert('Solo un administrador puede eliminar una caja.');
+      return;
     }
-  }
-);
 
+    if (!formulario.CodigoCaja) return alert('Ingrese código para eliminar');
 
-  if (res.ok) {
-    mostrarToast('Caja eliminada correctamente', 'success');
-    obtenerCajas();
-    limpiarFormulario();
-  } else {
-    alert('Error al eliminar');
-  }
-};
+    const confirmacion = window.confirm("¿Estás seguro de eliminar esta caja?");
+    if (!confirmacion) return;
 
+    const obs = solicitarObservacion();
+    if (!obs) return alert("Debe ingresar una observación para continuar.");
 
-  const fetchCajasFresh = async () => {
-  const res = await fetch("https://pruebas-sap-back.onrender.com/cajas-instrumental", { cache: "no-store" });
-  return await res.json();
-};
-
-const enrichLineas = async (lineas) => {
-  // Como todavía NO tienes endpoint /map, hacemos llamadas por item (simple)
-  // Si quieres, luego te hago el /map para que sea rapidísimo.
-  const enriched = await Promise.all(
-    lineas.map(async (l) => {
-      if (!l.CodigoItem) return l;
-
-      try {
-        const r = await fetch(`https://pruebas-sap-back.onrender.com/inventario-af-cajas?q=${encodeURIComponent(l.CodigoItem)}`, { cache: "no-store" });
-        const arr = await r.json();
-        const match = Array.isArray(arr) ? arr.find(x => x["Código"] === l.CodigoItem) : null;
-
-        if (!match) return l;
-
-        return {
-          ...l,
-          Grupo: match["Grupo de Artículos"] || "",
-          Estado: match["Estado"] || "",
-          CodigoProductoCliente: match["Codigo Producto Cliente"] || "",
-          Serie: match["Serie"] || "",
-          Costo: match["Costo"] ?? ""
-        };
-      } catch {
-        return l;
+    const res = await fetch(`${API_BASE}/cajas-instrumental/${formulario.CodigoCaja}`, {
+      method: 'DELETE',
+      headers: {
+        'usuario': correoUsuario,
+        'observacion': obs
       }
-    })
-  );
+    });
 
-  return enriched;
-};
+    if (res.ok) {
+      mostrarToast('Caja eliminada correctamente', 'success');
+      obtenerCajas();
+      limpiarFormulario();
+    } else {
+      alert('Error al eliminar');
+    }
+  };
 
-const buscarCaja = async () => {
-  const cajasFresh = await fetchCajasFresh();
-  setCajas(cajasFresh);
+  // =========================
+  // BUSCAR (AQUÍ VA LA CORRECCIÓN)
+  // =========================
+  const buscarCaja = async () => {
+    const cajasFresh = await fetchCajasFresh();
+    setCajas(cajasFresh);
 
-  const resultados = cajasFresh.filter((c) => c.CodigoCaja === formulario.CodigoCaja);
-  if (!resultados.length) return alert("Caja no encontrada");
+    const resultados = cajasFresh.filter((c) => c.CodigoCaja === formulario.CodigoCaja);
+    if (!resultados.length) return alert("Caja no encontrada");
 
-  const detallesBase = resultados.map((c) => ({
-    CodigoItem: c.CodigoItem || "",
-    Descripcion: c.Descripcion || "",
-    CantidadItem: c.CantidadItem || 1,
-    TipoItem: c.TipoItem || "",
-    LoteItem: c.LoteItem || ""
-  }));
-
-  const cabecera = resultados[0];
-  const fechaOriginal = cabecera.FechaCaja || cabecera.FechaCreacion || cabecera.FechaActualizacion || "";
-  const fechaFormateada = fechaOriginal ? new Date(fechaOriginal).toISOString().split("T")[0] : "";
-
-  const detalles = await enrichLineas(detallesBase);
-
-  setFormulario({
-    CodigoCaja: cabecera.CodigoCaja,
-    FechaCaja: fechaFormateada,
-    ClaseCaja: cabecera.ClaseCaja,
-    Almacen: cabecera.Almacen,
-    Lineas: detalles
-  });
-
-  setModoEditar(true);
-  setPaginaActual(1);
-};
-
-
-  const seleccionarCajaDesdeModal = async (caja) => {
-  const cajasFresh = await fetchCajasFresh();
-  setCajas(cajasFresh);
-
-  const detallesBase = cajasFresh
-    .filter((c) => c.CodigoCaja === caja.CodigoCaja)
-    .map((c) => ({
+    // ✅ mapeo robusto (Serie/Individual SIEMPRE)
+    const detallesBase = resultados.map((c) => ({
       CodigoItem: c.CodigoItem || "",
-      Descripcion: c.Descripcion || "",
-      CantidadItem: c.CantidadItem || 1,
+      Descripcion: (c.Descripcion && c.Descripcion !== "nan") ? c.Descripcion : "",
+      CantidadItem: c.CantidadItem ?? 1,
       TipoItem: c.TipoItem || "",
-      LoteItem: c.LoteItem || ""
+      LoteItem: c.LoteItem || "",
+      IndividualSet: c.U_Individual_Set ?? c.IndividualSet ?? "I",
+      SerieCaja: c.U_Serie ?? c.SerieCaja ?? ""
     }));
 
-  const detalles = await enrichLineas(detallesBase);
+    const cabecera = resultados[0];
+    const fechaOriginal = cabecera.FechaCaja || cabecera.FechaCreacion || cabecera.FechaActualizacion || "";
+    const fechaFormateada = fechaOriginal ? new Date(fechaOriginal).toISOString().split("T")[0] : "";
 
-  const fechaFormateada = caja.FechaCaja ? new Date(caja.FechaCaja).toISOString().split("T")[0] : "";
+    const detalles = await enrichLineas(detallesBase);
 
-  setFormulario({
-    CodigoCaja: caja.CodigoCaja,
-    FechaCaja: fechaFormateada,
-    ClaseCaja: caja.ClaseCaja,
-    Almacen: caja.Almacen,
-    Lineas: detalles
-  });
+    setFormulario({
+      CodigoCaja: cabecera.CodigoCaja,
+      FechaCaja: fechaFormateada,
+      ClaseCaja: cabecera.ClaseCaja,
+      Almacen: cabecera.Almacen,
+      Lineas: detalles
+    });
 
-  setModoEditar(true);
-  setMostrarModal(false);
-  setPaginaActual(1);
-};
+    setModoEditar(true);
+    setPaginaActual(1);
+  };
 
+  // =========================
+  // SELECCIONAR DESDE MODAL (AQUÍ VA LA CORRECCIÓN)
+  // =========================
+  const seleccionarCajaDesdeModal = async (caja) => {
+    const cajasFresh = await fetchCajasFresh();
+    setCajas(cajasFresh);
 
+    const detallesBase = cajasFresh
+      .filter((c) => c.CodigoCaja === caja.CodigoCaja)
+      .map((c) => ({
+        CodigoItem: c.CodigoItem || "",
+        Descripcion: (c.Descripcion && c.Descripcion !== "nan") ? c.Descripcion : "",
+        CantidadItem: c.CantidadItem ?? 1,
+        TipoItem: c.TipoItem || "",
+        LoteItem: c.LoteItem || "",
+        // ✅ AHORA SÍ
+        IndividualSet: c.U_Individual_Set ?? c.IndividualSet ?? "I",
+        SerieCaja: c.U_Serie ?? c.SerieCaja ?? ""
+      }));
+
+    const detalles = await enrichLineas(detallesBase);
+
+    const fechaFormateada = caja.FechaCaja ? new Date(caja.FechaCaja).toISOString().split("T")[0] : "";
+
+    setFormulario({
+      CodigoCaja: caja.CodigoCaja,
+      FechaCaja: fechaFormateada,
+      ClaseCaja: caja.ClaseCaja,
+      Almacen: caja.Almacen,
+      Lineas: detalles
+    });
+
+    setModoEditar(true);
+    setMostrarModal(false);
+    setPaginaActual(1);
+  };
+
+  // =========================
+  // FORM
+  // =========================
   const limpiarFormulario = () => {
     setFormulario({
       CodigoCaja: '',
@@ -308,7 +333,9 @@ const buscarCaja = async () => {
           CantidadItem: 1,
           TipoItem: '',
           LoteItem: '',
-          Descripcion: ''
+          Descripcion: '',
+          IndividualSet: 'I',
+          SerieCaja: ''
         }
       ]
     });
@@ -317,53 +344,52 @@ const buscarCaja = async () => {
   };
 
   const agregarLinea = () => {
-  const nuevasLineas = [...formulario.Lineas, {
-    CodigoItem: '',
-    CantidadItem: 1,
-    TipoItem: '',
-    LoteItem: '',
-    Descripcion: ''
-  }];
-  setFormulario({ ...formulario, Lineas: nuevasLineas });
+    const nuevasLineas = [...formulario.Lineas, {
+      CodigoItem: '',
+      CantidadItem: 1,
+      TipoItem: '',
+      LoteItem: '',
+      Descripcion: '',
+      IndividualSet: 'I',
+      SerieCaja: ''
+    }];
 
-  // 👉 Cambiar a última página
-  const nuevaCantidad = nuevasLineas.length;
-  const nuevaTotalPaginas = Math.ceil(nuevaCantidad / itemsPorPagina);
-  setPaginaActual(nuevaTotalPaginas);
-};
+    setFormulario({ ...formulario, Lineas: nuevasLineas });
 
+    const nuevaCantidad = nuevasLineas.length;
+    const nuevaTotalPaginas = Math.ceil(nuevaCantidad / itemsPorPagina);
+    setPaginaActual(nuevaTotalPaginas);
+  };
 
   const eliminarLinea = async (index) => {
-  const confirmacion = window.confirm("¿Estás seguro de eliminar esta línea?");
-  if (!confirmacion) return;
+    const confirmacion = window.confirm("¿Estás seguro de eliminar esta línea?");
+    if (!confirmacion) return;
 
-  const obs = solicitarObservacion();
-  if (!obs) return alert("Debe ingresar una observación para continuar.");
+    const obs = solicitarObservacion();
+    if (!obs) return alert("Debe ingresar una observación para continuar.");
 
-  const nuevasLineas = formulario.Lineas.filter((_, i) => i !== index);
-  const nuevoFormulario = { ...formulario, Lineas: nuevasLineas };
-  setFormulario(nuevoFormulario);
+    const nuevasLineas = formulario.Lineas.filter((_, i) => i !== index);
+    const nuevoFormulario = { ...formulario, Lineas: nuevasLineas };
+    setFormulario(nuevoFormulario);
 
-  // Ejecutar actualización inmediatamente
-  const res = await fetch(`https://pruebas-sap-back.onrender.com/cajas-instrumental/${formulario.CodigoCaja}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'usuario': correoUsuario,
-      'observacion': obs
-    },
-    body: JSON.stringify(nuevoFormulario)
-  });
+    const res = await fetch(`${API_BASE}/cajas-instrumental/${formulario.CodigoCaja}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'usuario': correoUsuario,
+        'observacion': obs
+      },
+      body: JSON.stringify(nuevoFormulario)
+    });
 
-  if (res.ok) {
-    mostrarToast('Línea eliminada y caja actualizada correctamente', 'success');
-    obtenerCajas();
-  } else {
-    const err = await res.json();
-    alert(err.error || 'Error al actualizar la caja después de eliminar la línea');
-  }
-};
-
+    if (res.ok) {
+      mostrarToast('Línea eliminada y caja actualizada correctamente', 'success');
+      obtenerCajas();
+    } else {
+      const err = await res.json();
+      alert(err.error || 'Error al actualizar la caja después de eliminar la línea');
+    }
+  };
 
   const actualizarLinea = (index, campo, valor) => {
     const nuevasLineas = [...formulario.Lineas];
@@ -380,43 +406,49 @@ const buscarCaja = async () => {
   };
 
   const totalPaginas = Math.ceil(formulario.Lineas.length / itemsPorPagina);
-const mostrarToast = (mensaje, tipo = 'success') => {
-  setToast({ visible: true, mensaje, tipo });
-  setTimeout(() => setToast({ visible: false, mensaje: '', tipo: 'success' }), 3000);
-};
-const abrirModalSeleccionItem = (index) => {
-  setIndiceSeleccionado(index);
-  setMostrarModalItems(true);
-};
-const seleccionarItemDesdeModal = (item) => {
-  const nuevasLineas = [...formulario.Lineas];
 
-  nuevasLineas[indiceSeleccionado].CodigoItem = item["Código"] || "";
-  nuevasLineas[indiceSeleccionado].Descripcion = item["Descripción"] || "";
+  // =========================
+  // MODAL ITEMS
+  // =========================
+  const abrirModalSeleccionItem = (index) => {
+    setIndiceSeleccionado(index);
+    setMostrarModalItems(true);
+  };
 
-  // Tipo calculado AF / VT desde la vista
-  const tipoVista = (item["Tipo"] || "").toLowerCase();
-  nuevasLineas[indiceSeleccionado].TipoItem = tipoVista.includes("activo fijo") ? "AF" : "VT";
+  const seleccionarItemDesdeModal = (item) => {
+    const nuevasLineas = [...formulario.Lineas];
 
-  // Lote (si viene)
-  nuevasLineas[indiceSeleccionado].LoteItem = item["Lote"] || "";
+    nuevasLineas[indiceSeleccionado].CodigoItem = item["Código"] || "";
+    nuevasLineas[indiceSeleccionado].Descripcion = item["Descripción"] || "";
 
-  // ✅ CAMPOS INFORMATIVOS (no editables)
-  nuevasLineas[indiceSeleccionado].Grupo = item["Grupo de Artículos"] || "";
-  nuevasLineas[indiceSeleccionado].Estado = item["Estado"] || "";
-  nuevasLineas[indiceSeleccionado].CodigoProductoCliente = item["Codigo Producto Cliente"] || "";
-  nuevasLineas[indiceSeleccionado].Serie = item["Serie"] || "";
-  nuevasLineas[indiceSeleccionado].Costo = item["Costo"] ?? "";
+    const tipoVista = (item["Tipo"] || "").toLowerCase();
+    nuevasLineas[indiceSeleccionado].TipoItem = tipoVista.includes("activo fijo") ? "AF" : "VT";
 
-  // (Opcional)
-  nuevasLineas[indiceSeleccionado].CodigoClaseAF = item["Codigo Clase AF"] || "";
-  nuevasLineas[indiceSeleccionado].NombreClaseAF = item["Nombre Clase AF"] || "";
+    nuevasLineas[indiceSeleccionado].LoteItem = item["Lote"] || "";
 
-  setFormulario({ ...formulario, Lineas: nuevasLineas });
-  setMostrarModalItems(false);
-};
+    nuevasLineas[indiceSeleccionado].Grupo = item["Grupo de Artículos"] || "";
+    nuevasLineas[indiceSeleccionado].Estado = item["Estado"] || "";
+    nuevasLineas[indiceSeleccionado].CodigoProductoCliente = item["Codigo Producto Cliente"] || "";
 
+    const serieItem = item["Serie"] || "";
+    nuevasLineas[indiceSeleccionado].SerieAF = serieItem;
 
+    // ✅ editable: solo autollenar si está vacío
+    if (!nuevasLineas[indiceSeleccionado].SerieCaja) {
+      nuevasLineas[indiceSeleccionado].SerieCaja = serieItem;
+    }
+
+    nuevasLineas[indiceSeleccionado].Costo = item["Costo"] ?? "";
+    nuevasLineas[indiceSeleccionado].CodigoClaseAF = item["Codigo Clase AF"] || "";
+    nuevasLineas[indiceSeleccionado].NombreClaseAF = item["Nombre Clase AF"] || "";
+
+    setFormulario({ ...formulario, Lineas: nuevasLineas });
+    setMostrarModalItems(false);
+  };
+
+  // =========================
+  // UI
+  // =========================
   return (
     <div className={styles.container}>
       <div className={styles.headerBar}>
@@ -496,154 +528,164 @@ const seleccionarItemDesdeModal = (item) => {
         </select>
 
         <div className={styles.botones}>
-  <button className={styles.boton} onClick={guardarCaja}>
-    {modoEditar ? 'Actualizar' : 'Insertar'}
-  </button>
-  <button className={styles.boton} onClick={buscarCaja}>
-    Buscar
-  </button>
-  <button className={styles.boton} onClick={eliminarCaja}>
-    Eliminar
-  </button>
-  <button className={styles.boton} onClick={limpiarFormulario}>
-    Limpiar
-  </button>
-  {modoEditar && (
-    <button className={`${styles.boton} ${styles.botonCancelar}`} onClick={limpiarFormulario}>
-      Cancelar Edición
-    </button>
-  
-  )}
-  {rol === 'Administrador' && formulario.CodigoCaja && (
-  <button className={styles.boton} onClick={verLogsCaja}>
-    Ver Logs
-  </button>
-  
-)}
-{/* ✅ AQUÍ MISMO VA EL BOTÓN DE IMÁGENES */}
-  {formulario.CodigoCaja && (
-    <button
-      className={styles.boton}
-      onClick={() => setMostrarModalImagenes(true)}
-    >
-      Ver Imágenes
-    </button>
-  )}
+          <button className={styles.boton} onClick={guardarCaja}>
+            {modoEditar ? 'Actualizar' : 'Insertar'}
+          </button>
+          <button className={styles.boton} onClick={buscarCaja}>
+            Buscar
+          </button>
+          <button className={styles.boton} onClick={eliminarCaja}>
+            Eliminar
+          </button>
+          <button className={styles.boton} onClick={limpiarFormulario}>
+            Limpiar
+          </button>
 
-</div>
+          {modoEditar && (
+            <button className={`${styles.boton} ${styles.botonCancelar}`} onClick={limpiarFormulario}>
+              Cancelar Edición
+            </button>
+          )}
 
+          {rol === 'Administrador' && formulario.CodigoCaja && (
+            <button className={styles.boton} onClick={verLogsCaja}>
+              Ver Logs
+            </button>
+          )}
+
+          {formulario.CodigoCaja && (
+            <button
+              className={styles.boton}
+              onClick={() => setMostrarModalImagenes(true)}
+            >
+              Ver Imágenes
+            </button>
+          )}
+        </div>
       </div>
 
       <h4 className={styles.subtitulo}>Detalle de Ítems</h4>
       <table className={styles.tabla}>
         <thead>
-  <tr>
-    <th>Código Ítem</th>
-    <th>Descripción</th>
-    <th>Cantidad</th>
-    <th>Tipo</th>
-    <th>Lote</th>
-
-    {/* ✅ NUEVAS (SOLO INFORMATIVAS) */}
-    <th>Grupo</th>
-    <th>Estado</th>
-    <th>Cód. Prod. Cliente</th>
-    <th>Serie</th>
-    <th>Costo</th>
-
-    <th>Acción</th>
-  </tr>
-</thead>
+          <tr>
+            <th>Código Ítem</th>
+            <th>Descripción</th>
+            <th>Cantidad</th>
+            <th>Tipo</th>
+            <th>Lote</th>
+            <th>Individual/Set</th>
+            <th>Serie (Caja)</th>
+            <th>Grupo</th>
+            <th>Estado</th>
+            <th>Cód. Prod. Cliente</th>
+            <th>Costo</th>
+            <th>Acción</th>
+          </tr>
+        </thead>
 
         <tbody>
           {lineasPaginadas.map((linea, index) => {
-  const lineaIndexReal = indicePrimerItem + index;
-  return (
-  <tr key={lineaIndexReal}>
-  {/* Código */}
-  <td>
-    <div className={styles.inputConIcono}>
-      <input
-        className={styles.inputControl}
-        value={linea.CodigoItem}
-        onChange={(e) => actualizarLinea(lineaIndexReal, "CodigoItem", e.target.value)}
-      />
-      <button
-        className={styles.iconoLupa}
-        title="Buscar ítem"
-        onClick={() => abrirModalSeleccionItem(lineaIndexReal)}
-      >
-        🔍
-      </button>
-    </div>
-  </td>
+            const lineaIndexReal = indicePrimerItem + index;
+            return (
+              <tr key={lineaIndexReal}>
+                <td>
+                  <div className={styles.inputConIcono}>
+                    <input
+                      className={styles.inputControl}
+                      value={linea.CodigoItem}
+                      title={linea.CodigoItem}
+                      onChange={(e) => actualizarLinea(lineaIndexReal, "CodigoItem", e.target.value)}
+                    />
+                    <button
+                      className={styles.iconoLupa}
+                      title="Buscar ítem"
+                      onClick={() => abrirModalSeleccionItem(lineaIndexReal)}
+                    >
+                      🔍
+                    </button>
+                  </div>
+                </td>
 
-  {/* Descripción */}
-  <td>
-    <input
-      className={styles.inputControl}
-      placeholder="Descripción"
-      value={linea.Descripcion || ""}
-      onChange={(e) => actualizarLinea(lineaIndexReal, "Descripcion", e.target.value)}
-    />
-  </td>
+                <td>
+                  <input
+                    className={styles.inputControl}
+                    placeholder="Descripción"
+                    title={linea.Descripcion || ""}
+                    value={linea.Descripcion || ""}
+                    onChange={(e) => actualizarLinea(lineaIndexReal, "Descripcion", e.target.value)}
+                  />
+                </td>
 
-  {/* Cantidad */}
-  <td>
-    <input
-      className={styles.inputControl}
-      type="number"
-      min="0"
-      value={linea.CantidadItem}
-      onChange={(e) => actualizarLinea(lineaIndexReal, "CantidadItem", e.target.value)}
-    />
-  </td>
+                <td>
+                  <input
+                    className={styles.inputControl}
+                    type="number"
+                    min="0"
+                    value={linea.CantidadItem}
+                    onChange={(e) => actualizarLinea(lineaIndexReal, "CantidadItem", e.target.value)}
+                  />
+                </td>
 
-  {/* Tipo */}
-  <td>
-    <select
-      className={styles.inputControl}
-      value={linea.TipoItem}
-      onChange={(e) => actualizarLinea(lineaIndexReal, "TipoItem", e.target.value)}
-    >
-      <option value="">Seleccione</option>
-      <option value="AF">AF</option>
-      <option value="VT">VT</option>
-    </select>
-  </td>
+                <td>
+                  <select
+                    className={styles.inputControl}
+                    title={linea.TipoItem}
+                    value={linea.TipoItem}
+                    onChange={(e) => actualizarLinea(lineaIndexReal, "TipoItem", e.target.value)}
+                  >
+                    <option value="">Seleccione</option>
+                    <option value="AF">AF</option>
+                    <option value="VT">VT</option>
+                  </select>
+                </td>
 
-  {/* Lote */}
-  <td>
-    <input
-      className={styles.inputControl}
-      value={linea.LoteItem || ""}
-      onChange={(e) => actualizarLinea(lineaIndexReal, "LoteItem", e.target.value)}
-    />
-  </td>
+                <td>
+                  <input
+                    className={styles.inputControl}
+                    title={linea.LoteItem || ""}
+                    value={linea.LoteItem || ""}
+                    onChange={(e) => actualizarLinea(lineaIndexReal, "LoteItem", e.target.value)}
+                  />
+                </td>
 
-  {/* ✅ INFORMATIVOS (NO EDITABLES) */}
-  <td><span className={styles.infoCell}>{linea.Grupo || "—"}</span></td>
-  <td><span className={styles.infoCell}>{linea.Estado || "—"}</span></td>
-  <td><span className={styles.infoCell}>{linea.CodigoProductoCliente || "—"}</span></td>
-  <td><span className={styles.infoCell}>{linea.Serie || "—"}</span></td>
-  <td>
-    <span className={styles.infoCell}>
-      {linea.Costo !== null && linea.Costo !== undefined && linea.Costo !== "" ? linea.Costo : "—"}
-    </span>
-  </td>
+                <td>
+                  <select
+                    className={styles.inputControl}
+                    title={linea.IndividualSet || "I"}
+                    value={linea.IndividualSet || "I"}
+                    onChange={(e) => actualizarLinea(lineaIndexReal, "IndividualSet", e.target.value)}
+                  >
+                    <option value="I">I</option>
+                    <option value="S">S</option>
+                  </select>
+                </td>
 
-  {/* Acción */}
-  <td>
-    <button className={styles.botonEliminar} onClick={() => eliminarLinea(lineaIndexReal)}>
-      Eliminar
-    </button>
-  </td>
-</tr>
+                <td>
+                  <input
+                    className={styles.inputControl}
+                    title={linea.SerieCaja || ""}
+                    value={linea.SerieCaja || ""}
+                    onChange={(e) => actualizarLinea(lineaIndexReal, "SerieCaja", e.target.value)}
+                  />
+                </td>
 
-);
+                <td><span className={styles.infoCell}>{linea.Grupo || "—"}</span></td>
+                <td><span className={styles.infoCell}>{linea.Estado || "—"}</span></td>
+                <td><span className={styles.infoCell}>{linea.CodigoProductoCliente || "—"}</span></td>
+                <td>
+                  <span className={styles.infoCell}>
+                    {linea.Costo !== null && linea.Costo !== undefined && linea.Costo !== "" ? linea.Costo : "—"}
+                  </span>
+                </td>
 
-})}
-
+                <td>
+                  <button className={styles.botonEliminar} onClick={() => eliminarLinea(lineaIndexReal)}>
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
 
@@ -674,34 +716,35 @@ const seleccionarItemDesdeModal = (item) => {
           onSelect={seleccionarCajaDesdeModal}
         />
       )}
+
       {toast.visible && (
-  <div className={`${styles.toast} ${styles[toast.tipo]}`}>
-    {toast.mensaje}
-  </div>
-)}
-{mostrarModalLogs && (
-  <ModalLogs
-    logs={logsCaja}
-    onClose={() => setMostrarModalLogs(false)}
-  />
-)}
+        <div className={`${styles.toast} ${styles[toast.tipo]}`}>
+          {toast.mensaje}
+        </div>
+      )}
 
-{mostrarModalItems && (
-  <ModalSeleccionItem
-    onClose={() => setMostrarModalItems(false)}
-    onSelect={seleccionarItemDesdeModal}
-  />
-)}
-{mostrarModalImagenes && (
-  <ModalImagenesCaja
-    open={mostrarModalImagenes}
-    onClose={() => setMostrarModalImagenes(false)}
-    codigoCaja={formulario.CodigoCaja}
-    apiBase={API_BASE}
-  />
-)}
+      {mostrarModalLogs && (
+        <ModalLogs
+          logs={logsCaja}
+          onClose={() => setMostrarModalLogs(false)}
+        />
+      )}
 
+      {mostrarModalItems && (
+        <ModalSeleccionItem
+          onClose={() => setMostrarModalItems(false)}
+          onSelect={seleccionarItemDesdeModal}
+        />
+      )}
+
+      {mostrarModalImagenes && (
+        <ModalImagenesCaja
+          open={mostrarModalImagenes}
+          onClose={() => setMostrarModalImagenes(false)}
+          codigoCaja={formulario.CodigoCaja}
+          apiBase={API_BASE}
+        />
+      )}
     </div>
-    
   );
 }

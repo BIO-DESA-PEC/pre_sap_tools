@@ -40,7 +40,7 @@ export default function ArchivoCaja() {
     setMessage('');
 
     try {
-      const response = await fetch('https://pruebas-sap-back.onrender.com/cajas-instrumental-archivo', {
+      const response = await fetch('https://pruebas-sap.onrender.com/cajas-instrumental-archivo', {
         method: 'POST',
         body: formData
       });

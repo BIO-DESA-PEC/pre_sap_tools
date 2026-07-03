@@ -25,7 +25,7 @@ export default function ModalSeleccionItem({ onClose, onSelect }) {
     const fetchItems = async () => {
       try {
         const res = await fetch(
-          "https://pruebas-sap-back.onrender.com/inventario-af-cajas"
+          "https://pruebas-sap.onrender.com/inventario-af-cajas"
         );
         const data = await res.json();
         setItems(Array.isArray(data) ? data : []);

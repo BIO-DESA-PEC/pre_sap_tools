@@ -37,7 +37,7 @@ const Solicitud = () => {
   const cargarSolicitudesPendientes = () => {
     setIsLoading(true);
     const startTime = Date.now();
-    fetch('https://pruebas-sap-back.onrender.com/check_inventory_transfer')
+    fetch('https://pruebas-sap.onrender.com/check_inventory_transfer')
       .then(res => res.json())
       .then(data => {
         console.log('Tiempo de respuesta:', Date.now() - startTime, 'ms');
@@ -52,7 +52,7 @@ const Solicitud = () => {
   };
 
   const cargarBodegas = () => {
-    fetch("https://pruebas-sap-back.onrender.com/get-warehouses")
+    fetch("https://pruebas-sap.onrender.com/get-warehouses")
       .then(res => res.json())
       .then(data => {
         const bodegas = data.warehouses || [];
@@ -78,7 +78,7 @@ const Solicitud = () => {
       return;
     }
 
-    fetch(`https://pruebas-sap-back.onrender.com/get_inventory_transfer_detail/${solicitud.DocEntry}`)
+    fetch(`https://pruebas-sap.onrender.com/get_inventory_transfer_detail/${solicitud.DocEntry}`)
       .then(res => res.json())
       .then(data => {
         if (data.DocEntry) {
@@ -94,7 +94,7 @@ const Solicitud = () => {
   const realizarTransferencia = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`https://pruebas-sap-back.onrender.com/create_inventory_transfer/${docEntry}`, {
+      const response = await fetch(`https://pruebas-sap.onrender.com/create_inventory_transfer/${docEntry}`, {
         method: 'POST'
       });
 
